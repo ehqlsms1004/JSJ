@@ -9,7 +9,7 @@ const api = axios.create({
 //test 호출
 export async function Test_api() {
   const res = await api.get('/test');
-  return res.data;   // { msg: "Flask OK" }
+  return res.data;   // { msg: "Flask OK " }
 }
 
 //users GET 호출
@@ -19,7 +19,7 @@ export async function User_api() {
 }
 
 //user POST 호출
-export async function createUser(name, email) {
-  const res = await api.post('/users', { name, email });
+export async function createUser(nickname, email) {
+  const res = await api.post('/users', { nickname, email });
   return res.data;
 }

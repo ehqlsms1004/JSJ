@@ -18,7 +18,7 @@ export function UserListView({ users }) {
       <h2>/api/users 결과 (GET)</h2>
       <ul>
         {users.map((u) => (
-          <li key={u.id}>{u.name} - {u.email}</li>
+          <li key={u.user_id}>{u.user_nickname} - {u.user_email}</li>
         ))}
       </ul>
     </section>
