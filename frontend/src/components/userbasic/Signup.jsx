@@ -1,57 +1,116 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { debounce } from 'lodash';  // 실시간 중복체크 딜레이 처리 아이디 입력시 api 불려와야하는데 너무 빠르게 불러오면 비용up
+import { Id_Check, New_User } from '../../api/User_Api';  // API 연동
 
-import { Container, Row, Col, Button, Form, Card, Table, inputGroup, InputGroup} from "react-bootstrap";
+import { Container, Row, Col, Button, Form, Card, Table, InputGroup} from "react-bootstrap";
+import { FaGoogle, FaComment } from "react-icons/fa";   //부트스트랩 불러오기
 
-import { FaGoogle, FaComment } from "react-icons/fa";
 
+//회원가입 함수 생성
 export default function Signup() {
     const Navigate = useNavigate();
 
+    //기본 폼 세팅
     const [form, setForm] = useState({
-        username: "",
+        nickname: "",
         email: "",
         password: "",
         password2: "",
         birth: "",
-        category: "",
-        interest: "",
     });
 
+    //필수 약관 체크 할수 있게 하기
     const [ agree, setAgree ] = useState({
         terms: false,
         privacy: false,
         thirdParty: false,
-        marketing: false,
-        analytics: false,
-        recommend: false,
     });
 
+    //중복체크 상태들 (핵심 기능)
+    const [checking, setChecking] = useState({ nickname: false, email: false }); //초기값을 false 로두고 시작
+    const [available, setAvailable] = useState({ nickname: null, email: null }); // 없다고 시작하기
+    const [errors, setErrors] = useState({});
+
+    //실시간 중복체크 함수
+    const Id_Check_Api = debounce(async (type, value) => {
+        if (type === 'nickname' && value.length < 2) return;
+        if (type === 'email' && !value.includes('@')) return;
+
+        setChecking(prev => ({ ...prev, [type]: true }));
+        try {
+            const data = await Id_Check(type, value);
+            setAvailable(prev => ({ ...prev, [type]: data.available }));
+            setErrors(prev => ({ ...prev, [type]: data.available ? '' : data.message }));
+        } catch {
+            setErrors(prev => ({ ...prev, [type]: '서버 오류' }));
+        } finally {
+            setChecking(prev => ({ ...prev, [type]: false }));
+        }
+    }, 500);
+
+
+
+
+    //회원가입 버튼 활성화
     const requiredOk = useMemo(() => {
         return (
-            form.username &&
+            form.nickname &&
             form.email &&
             form.password &&
             form.password2 &&
-            form.birth &&
             agree.terms &&
             agree.privacy &&
-            agree.thirdParty
+            agree.thirdParty &&
+            available.nickname === true &&  // 🔄 중복체크 통과 필수
+            available.email === true
         );
-    }, [form, agree]);
+    }, [form, agree,available]);
 
+
+
+    //데이터 form폼에 저장해주기
     const onChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
+        setErrors(prev => ({ ...prev, [name]: '' }));
+
+        // 🔄 실시간 중복체크
+        if (name === 'nickname' || name === 'email') {
+            Id_Check_Api(name, value);
+        }
     };
 
+    // 생년월일 입력란 추후에 작성해도 되도록 하기
+    const onBirthChange = (e) => {
+        let value = e.target.value.replace(/[^0-9]/g, '').slice(0, 8);
+
+        let newValue = '';
+        if (value.length >= 8) {
+            newValue = `${value.slice(0,4)} / ${value.slice(4,6)} / ${value.slice(6,8)}`;
+        } else if (value.length >= 6) {
+            newValue = `${value.slice(0,4)} / ${value.slice(4,6)} / `;
+        } else if (value.length >= 4) {
+            newValue = `${value.slice(0,4)} / `;
+        } else {
+            newValue = value;
+        }
+
+        setForm(prev => ({ ...prev, birth: newValue }));
+        setTimeout(() => e.target.setSelectionRange(newValue.length, newValue.length), 0);
+    };
+
+    //데이터 check폼에 저장해주기
     const onAgreeChange = (e) => {
         const { name, checked } = e.target;
         setAgree((prev) => ({ ...prev, [name]: checked }));
     };
 
-    const onSubmit = (e) => {
-        e.preventDefauit();
+
+
+    //지금까지 만든 함수 이용해서 최종 API연동 회원가입 구현 조건
+    const onSubmit = async(e) => {
+        e.preventDefault();
 
         if (!requiredOk) {
             alert("필수 입력/필수 약관 동의를 확인해주세요.");
@@ -62,11 +121,36 @@ export default function Signup() {
             return;
         }
 
-        // TODO: axios 회원가입 연결
-        console.log("signup payload:", { form, agree });
+        try {
+            const birthdateClean = form.birth
+                .replace(/[^0-9]/g, '')
+                .substring(0, 8)
+                .replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') || null;
 
-        alert("회원가입이 완료되었습니다.");
-        navigator("/login");
+            const payload = {
+                nickname: form.nickname,
+                email: form.email,
+                password: form.password,
+                birthdate: birthdateClean,  // YYYY-MM-DD 변환
+            };
+
+            const result = await New_User(payload);
+            if (result.success) {
+                alert("회원가입이 완료되었습니다.");
+                Navigate("/login");
+            }
+        } catch (error) {
+            alert(error.response?.data?.error || '회원가입 실패');
+        }
+    };
+
+    //중복확인 버튼 클릭시 실시
+    const handleCheckDuplicate = (type) => {
+        if (form[type].length < 2) {
+            alert('2글자 이상 입력해주세요.');
+            return;
+        }
+        Id_Check_Api(type, form[type]);
     };
 
     // 본체 시작
@@ -78,17 +162,17 @@ export default function Signup() {
                     <div className="small mb-3">복잡한 입력없이 3초만에 회원가입 OK!</div>
 
                     <div className="d-grid gap-2 mx-auto signup-bs-sns" style={{ maxWidth: 380 }}>
-                        <Button className="signup-bs-btn-naver" size="1g" type="button">
+                        <Button className="signup-bs-btn-naver" size="lg" type="button">
                             <span className="signup-bs-badge">N</span>
                             네이버로 계속하기
                         </Button>
 
-                        <Button className="signup-bs-btn-kakao" size="1g" type="button">
+                        <Button className="signup-bs-btn-kakao" size="lg" type="button">
                             <span className="sinup-bs-badge"><FaComment /></span>
                             카카오로 계속하기
                         </Button>
 
-                        <Button variant="light" className="signup-bs-btn-google" size="1g" type="button">
+                        <Button variant="light" className="signup-bs-btn-google" size="lg" type="button">
                             <span className="signup-bs-btn-badge google"><FaGoogle /></span>
                             구글로 계속하기
                         </Button>
@@ -100,9 +184,9 @@ export default function Signup() {
                     </div>
                 </div>
 
-                <div className="signup-bs-divider my-3"/>
+                <div className="signup-bs-divider my-3" />
 
-                {/* 폼 시작 */}
+                {/* 회원정보 시작 */}
                 <Form onSubmit={onSubmit}>
                     {/* 1:회원정보(필수) */}
                     <Card className="mb-3 border-0">
@@ -113,33 +197,58 @@ export default function Signup() {
 
                                     <td className="signup-bs-mid">
                                         <div className="signup-bs-grid">
+
+                                            {/* 아이디: 실시간+수동 중복체크 */}
                                             <div className="signup-bs-label">아이디</div>
                                             <InputGroup size="sm">
-                                                <Form.Control name="username" value={form.username} onChange={onChange} />
-                                                <Button type="button" className="signup-bs-mini">중복확인</Button>
+                                                <Form.Control name="nickname" value={form.nickname} onChange={onChange}
+                                                    className={errors.nickname ? 'is-invalid' : available.nickname === true ? 'is-valid' : ''}
+                                                    placeholder="닉네임 입력"/>
+                                            {/* 중복체크 확인시 변하는 css*/}
+                                                <Button
+                                                    type="button" className={`signup-bs-mini ${checking.nickname ? 'text-white bg-primary' : ''}`}
+                                                    onClick={() => handleCheckDuplicate('nickname')} disabled={checking.nickname}>
+                                                    {checking.nickname ? ( <span className="spinner-border spinner-border-sm" /> ) : '중복확인'}
+                                                </Button>
                                             </InputGroup>
+                                            {/* 에러메세지 */}
+                                            {errors.nickname && <div className="form-text text-danger small mb-2">{errors.nickname}</div>}
+                                            {available.nickname === true && <div className="form-text text-success small mb-2">사용가능한 아이디입니다</div>}
 
+                                            {/*이메일: 실시간+수동 중복체크 */}
                                             <div className="signup-bs-label">이메일</div>
                                             <InputGroup size="sm">
-                                                <Form.Control name="email" value={form.email} onChange={onChange} />
-                                                <Button type="button" className="signup-bs-mini">확인</Button> 
+                                                <Form.Control name="email" type="email" value={form.email} onChange={onChange}
+                                                    className={errors.email ? 'is-invalid' : available.email === true ? 'is-valid' : ''}
+                                                    placeholder="example@email.com" />
+                                            {/* 중복체크 확인시 변하는 css*/}
+                                                <Button
+                                                    type="button" className={`signup-bs-mini ${checking.email ? 'text-white bg-primary' : ''}`}
+                                                    onClick={() => handleCheckDuplicate('email')} disabled={checking.email}>
+                                                    {checking.email ? (<span className="spinner-border spinner-border-sm" />) : '확인'}
+                                                </Button>
                                             </InputGroup>
+                                            {/* 에러메세지 */}
+                                            {errors.email && <div className="form-text text-danger small mb-2">{errors.email}</div>}
+                                            {available.email === true && <div className="form-text text-success small mb-2">사용가능한 이메일입니다</div>}
 
+                                            {/* 비밀번호 */}
                                             <div className="signup-bs-label">비밀번호</div>
                                             <InputGroup size="sm">
-                                                <Form.Control type="password" name="password" value={form.password} onChange={onChange} />
+                                                <Form.Control type="password" name="password" value={form.password} onChange={onChange} placeholder="8자 이상"/>
                                                 <Button type="button" className="signup-bs-mini">확인</Button> 
                                             </InputGroup>
 
                                             <div className="signup-bs-label">비밀번호 확인</div>
                                             <InputGroup size="sm">
-                                                <Form.Control type="password" name="password2" value={form.password2} onChange={onChange} />
+                                                <Form.Control type="password" name="password2" value={form.password2} onChange={onChange}  />
                                                 <Button type="button" className="signup-bs-mini">확인</Button>
                                             </InputGroup>
 
+                                            {/* 생년월일 */}
                                             <div className="signup-bs-label">생년월일</div>
                                             <InputGroup size="sm">
-                                                <Form.Control name="birth" value={form.birth} onChange={onChange} placeholder="YYYY / MM / DD" />
+                                                <Form.Control name="birth" value={form.birth} onChange={onBirthChange} placeholder="선택사항" maxLength="14"/>
                                                 <Button type="button" className="signup-bs-mini">확인</Button>
                                             </InputGroup>
                                         </div>
@@ -163,7 +272,7 @@ export default function Signup() {
 
                     {/* 2:부가정보(선택) */}
                     <Card className="mb-3 border-0">
-                        <Table responsive="mb-0 alin-middle signup -bs-table signup-bs-table signup-bs-alt">
+                        <Table responsive="mb-0 alin-middle signup-bs-table signup-bs-table signup-bs-alt">
                             <tbody>
                                 <tr>
                                     <td className="signup-bs-left alt">부가정보(선택)</td>
