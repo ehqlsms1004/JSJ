@@ -35,8 +35,10 @@ export default function Login() {
         console.log("✅ 세션 객체 생성:", userSession); // 세션 객체 확인 나중에 삭제할꺼임
         console.log("🎉 로그인 완료! 메인으로 이동합니다."); // 이거 뜨면 로그인 되는거임
 
+         {/*수정해야할 부분*/}
         localStorage.setItem("userSession", JSON.stringify(userSession));
         console.log("✅ localStorage 저장 완료"); // 저장 완료 나중에 삭제할꺼임
+        navigate("/ ");
 
         //추가
         localStorage.setItem('token', 'logged-in'); //token 키 저장
