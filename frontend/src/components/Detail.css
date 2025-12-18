@@ -1,0 +1,62 @@
+/* ----------------상세 페이지-------------------- */
+:root {
+    --bg--review:#f1edff;
+    --line:#6b6fbf;
+    --btn:#dcd8ff;
+    --btn-hover:#5b4ebd;
+    --storke:#9aa0d6;
+    --avatar:#d9d9d9;
+}
+
+*{box-sizing: border-box;}
+body {margin: 0;font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;background: #fff;}
+
+
+.wf {min-height: 100vh; display: flex;justify-content: center;background: #fff;}
+
+.wf-wrap {width:420px;max-width: 100%;min-height: 100vh; background: #fff;display: flex;flex-direction: column;padding: 0 18px;}
+
+/* 상단 */
+.wf-top {padding: 34px 0px 20px; display: grid;grid-template-columns: 120px 1fr;gap: 16px;align-items: start;}
+
+.wf-leftIcon {width: 110px;height: 110px;border-radius: 999px;display: grid;place-items: center;}
+.wf-logo {width: 100px;height: 100px;object-fit: contain;}
+
+.wf-title {margin: 0 0 8px;font-size: 22px;font-weight: 900;letter-spacing: -0.2px;}
+
+.wf-desc {margin: 0 0 10px;font-size: 13px;line-height: 1.45;color: #333;white-space: pre-line;}
+
+.wf-tags {margin: 0;font-size: 12px;color: #222;}
+
+/* 상단 밑 */
+.wf-line {height: 2px;background: var(--line);opacity: 0.45;}
+
+/* 리뷰 */
+.wf-reviews {background: var(--bg-review);padding: 18px 18px 26px;}
+.wf-label {display: inline-block;font-size: 11px;font-weight: 900;background: #bfbfbf;padding: 4px 10px;border-radius: 2px;margin: 6px 0 14px; color: #c40000;}
+
+.wf-list {display: grid;gap: 18px;}
+/* 리뷰 이미지 */
+.wf-row {display: grid;grid-template-columns: 64px 1fr;gap: 14px; align-items: start;}
+
+/* 이미지 프레임 */
+.wf-avatarBox {width: 56px;height: 56px;border-radius: 999px;background: var(--avatar);overflow: hidden;}
+
+.wf-avatarImg {width: 100%;height: 100%;object-fit: cover;display: block;}
+
+/* 텍스트 */
+.wf-reviewsText {padding-top: 6px;}
+.wf-name {font-size: 12px;font-weight: 900;margin-bottom: 6px;}
+.wf-comment {font-size: 12px;line-height: 1.45;color: #222;white-space: pre-line;}
+
+/* 하단 */
+.wf-cta {width: 100%;height: 52px;border: 0;background: var(--btn);font-size: 20px;font-weight: 900;letter-spacing: -0.3px;cursor: pointer;}
+
+/* 반응형 */
+@media (max-width:360px){
+    .wf-top {grid-template-columns: 96px 1fr;padding: 22px 14px 16px;}
+    .wf-leftIcon {width: 90px;height: 90px;}
+    .wf-logo {width: 76px;height: 76px;}
+    .wf-title {font-size: 20px;}
+    .wf-cta {font-size: 18px;height: 52px;}
+}

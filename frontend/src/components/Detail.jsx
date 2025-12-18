@@ -1,58 +1,82 @@
-import { useMemo, useState } from "react";
+// import { useMemo, useState } from "react";
+import "./Detail.css";
 
 export default function Detail() {
-    // API에서 받아오기
-    const product = useMemo(() => ({
-        // 예시로 써둠
-        AI_id: 1,
-        AI_name: "직무 맞춤형 AI비서",
-        AI_type: false,
-        AI_content: '직무/전문분야에 맞게 설계되는 AI 비서입니다. 선택한 직무의 커리큘럼 및 가이드에 따라 실전형 지원을 제공합니다.',
-        AI_hashtagL: ["직무맞춤형AI", "커리어비서", "추천/로드맵"],
-        AI_price: 39900,
-        // AI_image: "public/img/basic-ai.png",
-        AI_prompt: "당신의 직무 맞춤형 AI 비서입니다. 사용자의 목표/경력/시간을 고려해 학습 로드맵과 실행 체크리스트를 제안하세요.",
-        AI_use_count: 1240,
-        benefits: ["직무별 로드맵 자동 설계", "실전 과제/포트폴리오 가이드", "면접/이력서 개선 피드백", "매주 목표 정검&리마인드",],
-        options: ["1개월 이용권", "3개월 이용권", "1년 이용권"],
-    }),
-        [])
+    // public/img 안에 사진 넣기
+    const review = [{
+        id:1,
+        name: "카피바라",
+        text: "저는 돈이 부족해여! 고치만 야무지게 먹을거다!!",
+        avatar:"/img/detail-1.png",
+    },
+    {
+        id:2,
+        name:"수도승",
+        text:"나는 오늘 안간다 후후...20일만 지나면 야무지게 먹어주지\nㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ",
+        avatar:"/img/detail-1.png",
+    },
+    {
+        id:3,
+        name:"기린",
+        text:"응애 나 애기 기린",
+        avatar:"/img/detail-1.png",
+    },
+    {
+        id:4,
+        name:"예노",
+        text:"집에 가고싶다.",
+        avatar:"/img/detail-1.png",
+    },
+];
+    return (
+        <main className="wf">
+            <div className="wf-wtap">
+                {/* 상단 */}
+                <section className="wf-top">
+                    <div className="wf-leftIcon">
+                        <img className="wf-logo" src="/img/logo.png" alt="AI 로고" />
+                    </div>
 
+                    <div className="wf-rightText">
+                        <h1 className="wf-title">직무 맞춪형 AI 비서 입니다.</h1>
+                        <p className="wf-desc">
+                            전문 분야에 맞춰 생성되는 직무 맞춤형 AI 비서입니다. <br />
+                            선택한 직무의 지식업무 흐름에 학습해 당신의 목표에 맞는 실전형 지원을 제공합니다.
+                        </p>
+                        <p className="wf-tags">
+                            #직무맞춤AI비서 #개인비서 #전문분야특화
+                        </p>
+                    </div>
+                </section>
 
-const [plan, setPlan] = useState(product.options[0]);
-const [qty, setQty] = useState(1);
+                <div className="wf-line" />
 
-const price = useMemo(() => product.AI_price * qty, [product.AI_price, qty]);
+                {/* 리뷰 */}
+                <section className="wf-reciews">
+                    <span className="wf-label">리뷰</span>
 
-const formatKRW = (n) => {
-    try {
-        return n.toLocaleString("ko-KR");
-    } catch {
-        return String(n);
-    };
-}
+                    <div className="wf-list">
+                        {review.map((r) => (
+                            <div className="wf-row" key={r.id}>
+                                {/* 프로필 */}
+                                <div className="wf-avatarBox">
+                                    <img className="wf-avatarImg" src={r.avatar} alt={`${r.name} 아바타`} />
+                                </div>
+                                {/* 이름 + 리뷰 텍스트 */}
+                                <div className="wf-reviewText">
+                                    <div className="wf-name">{r.name}</div>
+                                    <div className="wf-comment">{r.text}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
 
-const onBuy = () => {
-    // TODO: 결제/주문 생성 API 연결
-    alert("구매하기\n상품: ${product.AI_name}\n옵션: ${plan}\n수량: ${qty}\n금액: ${formatKRW(price)}원");
-};
-
-const onStartChat = () => {
-    // TODO: 대화 페이지로 이동 (react-router-dom navigate)
-    alert('대화 시작하기로 이동(라우팅 연결 필요)')
-}
-
-return (
-    <main className="pd">
-        <div className="pd_container">
-            {/* 상단 */}
-            <section className="pd_hero">
-                <div className="pd_media" aria-label="상품 이미지">
-                    <img className="pd_img" src="/img/logo.png" alt="로고" />
-                    
-                </div>
-            </section>
-        </div>
-    </main>
-);
+                {/* 하단 */}
+                <button className="wf-cta" type="button">
+                    대화 시작하기
+                </button>
+            </div>
+        </main>
+    )
 }
