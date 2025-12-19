@@ -4,44 +4,45 @@ import "./Detail.css";
 export default function Detail() {
     // public/img 안에 사진 넣기
     const review = [{
-        id:1,
+        id: 1,
         name: "카피바라",
         text: "저는 돈이 부족해여! 고치만 야무지게 먹을거다!!",
-        avatar:"/img/detail-1.png",
+        avatar: "/img/detail-1.png",
     },
     {
-        id:2,
-        name:"수도승",
-        text:"나는 오늘 안간다 후후...20일만 지나면 야무지게 먹어주지\nㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ",
-        avatar:"/img/detail-1.png",
+        id: 2,
+        name: "수도승",
+        text: "나는 오늘 안간다 후후...20일만 지나면 야무지게 먹어주지\nㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ",
+        avatar: "/img/detail-1.png",
     },
     {
-        id:3,
-        name:"기린",
-        text:"응애 나 애기 기린",
-        avatar:"/img/detail-1.png",
+        id: 3,
+        name: "기린",
+        text: "응애 나 애기 기린",
+        avatar: "/img/detail-1.png",
     },
     {
-        id:4,
-        name:"예노",
-        text:"집에 가고싶다.",
-        avatar:"/img/detail-1.png",
+        id: 4,
+        name: "예노",
+        text: "집에 가고싶다.",
+        avatar: "/img/detail-1.png",
     },
-];
+    ];
     return (
         <main className="wf">
-            <div className="wf-wtap">
+            <div className="wf-wrap">
                 {/* 상단 */}
                 <section className="wf-top">
                     <div className="wf-leftIcon">
-                        <img className="wf-logo" src="/img/logo.png" alt="AI 로고" />
+                        <img className="wf-logo" src="/img/detail-2.png" alt="AI 로고" />
                     </div>
 
                     <div className="wf-rightText">
-                        <h1 className="wf-title">직무 맞춪형 AI 비서 입니다.</h1>
+                        <h1 className="wf-title">베이직/개인비서 이름란.</h1>
                         <p className="wf-desc">
-                            전문 분야에 맞춰 생성되는 직무 맞춤형 AI 비서입니다. <br />
-                            선택한 직무의 지식업무 흐름에 학습해 당신의 목표에 맞는 실전형 지원을 제공합니다.
+                            전문 분야에 맞춰 생성되는 직무 맞춤형 AI 비서입니다.
+                            선택한 직무의 지식업무 흐름에 학습해 당신의 목표에 맞는 실전형 지원을 제공합니다.<br />
+                            예시로 써논거임.
                         </p>
                         <p className="wf-tags">
                             #직무맞춤AI비서 #개인비서 #전문분야특화
@@ -52,8 +53,8 @@ export default function Detail() {
                 <div className="wf-line" />
 
                 {/* 리뷰 */}
-                <section className="wf-reciews">
-                    <span className="wf-label">리뷰</span>
+                <section className="wf-reviews">
+                    <span className="wf-label">Reviews</span>
 
                     <div className="wf-list">
                         {review.map((r) => (
@@ -73,9 +74,13 @@ export default function Detail() {
                 </section>
 
                 {/* 하단 */}
-                <button className="wf-cta" type="button">
-                    대화 시작하기
-                </button>
+                <section className="wf-bottom">
+                    <div className="wf-wrap">
+                        <button className="wf-cta" type="button">
+                            대화 시작하기
+                        </button>
+                    </div>
+                </section>
             </div>
         </main>
     )
