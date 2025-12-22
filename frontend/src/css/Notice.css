@@ -5,21 +5,27 @@
 
 
 /* ---------------------------------------------- */
-/* 게시글 작성 페이지 */
+/* 게시글 작성 / 수정 페이지 */
 /* ---------------------------------------------- */
 .NoticeWrite_all {width: 100%; max-width: 1200px;}
-.NW_title {width: 150px; height: 40px; margin: 70px 0; background-color: #F3EEFF; display: flex; justify-content: center; align-items: center; font-weight: 550; border-bottom: 1px solid #444;}
+.NW_title_box {width: 140px; height: 45px; margin: 70px 0; background-color: #F3EEFF; display: flex; justify-content: center; align-items: center; border-radius: 5px;}
+.NW_title {width: 130px; height: 32px; margin-top: 5px; font-weight: 550; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid #444;}
 .image-preview-container {display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap;}
 .preview-image {width: 120px; height: 120px; object-fit: cover; border-radius: 8px;}
-.content-textarea {resize: none;}
 .preview-wrapper {position: relative;}
-.Del_button{border: none; width: 17px; height: 17px; display: flex; justify-content: center; align-items: center; position: absolute; right: 0; border-radius: 5px;}
+.NW_Del_button{border: none; width: 17px; height: 17px; display: flex; justify-content: center; align-items: center; position: absolute; right: 0; border-radius: 5px; border-radius: 100%;
+font-size: 10px; background: none; border: 1px solid #CAC6FF;} 
 
 .NW-sub-title {display: flex;}
 .NW-sub-h6 {width: 120px; height: 35px; display: flex; justify-content: center; align-items: center; background-color: #CAC6FF; margin-right: 10px; border-radius: 6px;}
 .NW-title-text {height: 35px;}
-.NW-title-text1 {height: 35px;}
-/* ---------------------------------------------- */
-/* 게시글 수정 페이지*/
-/* ---------------------------------------------- */
+.NW_preview_img {margin-bottom: 50px; border-radius: 50%;}
 
+.NW-content-row {display: block;}
+.content-textarea {resize: none; display: block; height: 300px;}
+
+.NW_check_button, .NW_cancel_button {width: 80px; height: 38px; margin-bottom: 50px; margin-top: 20px;}
+.NW_cancel_button {margin-left: -15px;}
+.NW_check_button i {padding-right: 10px;}
+
+.NW_tag_box {height: 125px; background-color: #F3EEFF; padding: 15px; margin-top: 50px; border-radius: 5px;}

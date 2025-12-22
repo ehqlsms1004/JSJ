@@ -13,6 +13,7 @@ import Pay from './components/userbasic/Pay.jsx'
 import Detail from './components/Detail.jsx'
 import ErrorPage from "./components/common/ErrorPage.jsx"
 import NoticeWrite from './components/notice/NoticeWrite.jsx';
+import ChatList from './components/chat/ChatList.jsx'
 
 /* 자동 스크롤 import */
 import BackToTop from "./components/common/BackToTop.jsx";
@@ -32,6 +33,7 @@ function App() {
             <Route path='/Detail' element={<Detail />} />
             <Route path='/ErrorPage' element={<ErrorPage />} />
             <Route path='/NoticeWrite' element={<NoticeWrite />} />
+            <Route path='/ChatList' element={<ChatList />} />
         </Routes>   
         <Outlet />
         <BackToTop />

@@ -1,3 +1,6 @@
+import "../../css/Notice.css";
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
 import { useState, useRef, useEffect } from 'react';
 import { Container, Form, Button, Row, Col, Image, Alert } from 'react-bootstrap';
 import { create_notice } from '../../api/Notice_Api';
@@ -48,6 +51,8 @@ const NoticeWrite = () => {
       fileInputRef.current.files = dt.files;
     }
   };
+  // GPT
+
 
   //완벽한 제출 핸들러 (로그인 검증 포함!)
   const handleSubmit = async (e) => {
@@ -142,7 +147,9 @@ const NoticeWrite = () => {
         className="post-write-container NoticeWrite_all"
         style={{ maxWidth: "900px", marginTop: "40px" }}
       >
-        <h4 className="NW_title">게시글 작성</h4>
+        <div className="NW_title_box">
+          <h4 className="NW_title">게시글 작성</h4>
+        </div>
 
         {/* 제출 메시지 */}
         {submitMessage && (
@@ -161,20 +168,12 @@ const NoticeWrite = () => {
         <Form onSubmit={handleSubmit}>
           {/* 제목 */}
           <Form.Group className="mb-3 NW-sub-title">
-            <h6 className="NW-sub-h6">제목</h6>
-            <Form.Control
-              type="text"
-              placeholder="제목을 입력하세요"
-              className="NW-title-text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              disabled={isSubmitting}
-            />
+            <h6 className="NW-sub-h6">제 목</h6>
+            <Form.Control type="text" placeholder="제목을 입력하세요." className="NW-title-text" />
           </Form.Group>
 
-          {/* 사진 첨부 */}
-          <Form.Group className="mb-4 NW-sub-title">
+          <Form.Group>
+            <div className="mb-4 NW-sub-title">
             <h6 className="NW-sub-h6">사진 첨부</h6>
             <Form.Control
               ref={fileInputRef}
@@ -185,27 +184,24 @@ const NoticeWrite = () => {
               className="NW-title-text1"
               disabled={isSubmitting}
             />
+            </div>
 
             <div className="image-preview-container">
               {previewImages.map((src, index) => (
                 <div className="preview-wrapper" key={index}>
-                  <button
-                    type="button"
-                    className="preview-remove-btn Del_button"
+                  <button type="button"
+                    className="preview-remove-btn NW_Del_button"
                     onClick={() => removeImage(index)}
-                    disabled={isSubmitting}
-                  >
-                    x
-                  </button>
-                  <Image src={src} thumbnail className="preview-image" />
+                    aria-label="이미지 삭제"><i class="fa-solid fa-xmark"></i></button>
+
+                  <Image src={src} thumbnail className="preview-image NW_preview_img" />
                 </div>
               ))}
             </div>
           </Form.Group>
 
-          {/* 내용 */}
-          <Form.Group className="mb-4">
-            <Form.Label>내용</Form.Label>
+          <Form.Group className="mb-4 NW-sub-title NW-content-row">
+            <h6 className="NW-sub-h6 NW_content">내 용</h6>
             <Form.Control
               as="textarea"
               rows={10}
@@ -218,51 +214,26 @@ const NoticeWrite = () => {
             />
           </Form.Group>
 
-          {/* 태그 */}
-          <Form.Group className="mb-3">
-            <Form.Label>태그 추가</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="#태그 입력"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              disabled={isSubmitting}
-            />
-          </Form.Group>
 
-          {/* 가격 */}
-          <Form.Group className="mb-4">
-            <Form.Label>가격 제시</Form.Label>
-            <Form.Control
-              type="number"
-              placeholder="₩ 가격 입력"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              min="0"
-              disabled={isSubmitting}
-            />
-          </Form.Group>
+          <div className="NW_tag_box">
+            <Form.Group className="mb-3 NW-sub-title">
+              <h6 className="NW-sub-h6">태그 입력</h6>
+              <Form.Control type="text" placeholder="# 태그 입력" className="NW-title-text" />
+            </Form.Group>
+
+            <Form.Group className="mb-4 NW-sub-title">
+              <h6 className="NW-sub-h6">가격 제시</h6>
+              <Form.Control type="number" placeholder="₩ 가격 입력" className="NW-title-text" />
+            </Form.Group>
+          </div>
 
           {/* 버튼들 */}
           <Row className="justify-content-end">
             <Col xs="auto">
-              <Button
-                variant="success"
-                type="submit"
-                disabled={isSubmitting || !title.trim() || !content.trim()}
-              >
-                {isSubmitting ? '등록 중...' : '확인'}
-              </Button>
+              <Button variant="success" className="NW_check_button"><i className="fa-solid fa-check"></i>확인</Button>
             </Col>
             <Col xs="auto">
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={handleCancel}
-                disabled={isSubmitting}
-              >
-                취소
-              </Button>
+              <Button variant="secondary" className="NW_cancel_button">취소</Button>
             </Col>
           </Row>
         </Form>
