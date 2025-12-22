@@ -3,7 +3,7 @@ import axios from 'axios';
 
 
 // =====  User전용 API  ============================
-const protectedApi = axios.create({
+export const protectedApi = axios.create({
   baseURL: 'http://localhost:5000/api',
 });
 

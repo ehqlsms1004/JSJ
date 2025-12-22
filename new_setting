@@ -5,3 +5,5 @@ flask db upgrade
 npm install react-router-dom react-bootstrap react-icons
 npm install bootstrap bootstrap
 npm i lodash
+
+mkdir uploads 이거 실행하여 파일 생성 하기
