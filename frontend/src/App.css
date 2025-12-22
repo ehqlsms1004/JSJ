@@ -88,6 +88,13 @@ html {overflow-y: scroll;}
 
 .notice-header {display: flex; justify-content: space-between; align-items: center;}
 
+/* 오른쪽 버튼 묶음 */
+.notice-actions {display: flex;align-items: center;gap: 15px;flex-wrap: wrap;justify-content: flex-end;}
+
+.my-board-btn {background: #fff;color: #2c2c54;border: 1px solid #2c2c54;padding: 6px 14px;border-radius: 6px;cursor: pointer;}
+
+.my-board-btn:hover {background: #f3eeff;}
+
 .write-btn {background: #2c2c54; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer;}
 
 .notice-table {

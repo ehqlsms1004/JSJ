@@ -6,86 +6,136 @@
     --btn-hover:#5b4ebd;
     --stroke:#9aa0d6;
     --avatar:#d9d9d9;
+
+    /* 레이아웃/타이포 스케일 */
+    --container:1200px;
+    --px: clamp(16px, 4vw, 24px);
+
+    --radius:14px;
+    --shadow: 0 10px 24px rgba(0,0,0,0.06);
+
+    --title: clamp(24px, 3.2vw, 40px);
+    --desc: clamp(15px, 1.8vw, 20px);
+    --tag: clamp(14px, 1.8vw, 20px);
+
+    --name: clamp(15px, 1.8vw, 20px);
+    --comment: clamp(13px, 1.6vw, 17px);
 }
 
 *{box-sizing: border-box;}
+html, body {height: 100%;}
 body {margin: 0;font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;background: #fff;}
 
-
+/* 전체 */
 .wf {min-height: 100vh; display: flex;justify-content: center;background: #fff;}
 
-.wf-wrap {max-width: 1200px;width: 100%;margin: 0 auto;padding: 0 24px;}
+/* 컨테이너 */
+.wf-wrap {max-width: var(--container);width: 100%;margin: 0 auto;padding:0 var(--px);}
 
 /* 상단 */
-.wf-top {min-height: 520px; padding: 30px 0; display: flex;align-items: center;justify-content: center;gap: 40px;text-align: left;}
+.wf-top {min-height: 520px; padding: 30px 0; display: grid;grid-template-columns: 360px 1fr;gap: clamp(18px, 3vw, 40px);align-items: center;text-align: left;}
 
-.wf-leftIcon {width: 350px;height: 350px;border-radius: 999px;display: grid;place-items: center;}
-.wf-logo {width: 300px;height: 300px;}
+/* aspect-radio = 정사각형 유지 */
+.wf-leftIcon {width: min(350px, 100%);aspect-ratio: 1/1;border-radius: 100%;display: grid;place-items: center;}
+
+.wf-logo {width: 85%;height: 85%;object-fit: contain;display: block;}
 
 .wf-rightText {max-width: 680px;}
 
-.wf-title {font-size: 40px;font-weight: 900;margin-bottom: 30px;}
+.wf-title {font-size:var(--title);font-weight: 900;margin:0 0 18px;line-height: 1.2;word-break: keep-all;}
 
-.wf-desc {font-size: 20px;line-height: 1.75;margin-bottom: 30px;}
+.wf-desc {font-size: var(--desc);line-height: 1.75;margin: 0 0 18px;color: #222;}
 
-.wf-tags {font-size: 20px;color: #6868ac;margin-top: 100px;}
+.wf-tags {font-size: var(--tag);color: #6868ac;margin-top: 32px;}
 
 /* 구분선 */
 .wf-line {height: 2px;background: var(--line);opacity: 0.45;}
 
 /* 리뷰 */
-.wf-reviews {background: var(--bg-review);padding: 40px 0px;}
+.wf-reviews {background: var(--bg-review);padding: clamp(24px, 4vw, 40px) 0;}
 
-.wf-label {display: block;width: fit-content;margin: 0 auto 24px;font-size: 20px;font-weight: 900;background: #000;padding: 7px 40px;border-radius: 2px;color: #fff;}
+.wf-label {display: block;width: fit-content;margin: 0 auto 18px;font-size: clamp(14px, 2vw, 20px);font-weight: 900;background: #000;padding: 8px 28px;border-radius: 6px;color: #fff;}
 
-.wf-list {width: 100%;display: grid;gap: 30px;}
+/* 리뷰 간격 */
+.wf-list {width: 100%;display: grid;gap: clamp(14px,2.4vw,22px);}
 
-/* 리뷰 이미지 */
-.wf-row {display: grid;grid-template-columns: 100px 1fr;gap: 18px; align-items: start;}
+/* 리뷰 이미지/덩어리 */
+.wf-row {display: grid;grid-template-columns: 88px 1fr;gap: 18px; align-items: start; padding: clamp(14px, 2.2vw, 18px);border: 1px solid rgba(107,111,191,0.22);border-radius: var(--radius);box-shadow: var(--shadow);background: #fff;}
 
 /* 이미지 프레임 */
-.wf-avatarBox {width: 80px;height: 80px;border-radius: 100%;background: var(--avatar);overflow: hidden;}
+.wf-avatarBox {width: 72px;height: 72px;border-radius: 100%;background: var(--avatar);overflow: hidden;}
 
 .wf-avatarImg {width: 100%;height: 100%;object-fit: cover;display: block;}
 
 /* 텍스트 */
-.wf-name {font-size: 20px;font-weight: 900;margin-bottom: 10px;}
-.wf-comment {font-size: 17px;line-height: 1.7;color: #222;white-space: pre-line;}
+.wf-name {font-size: var(--name);font-weight: 900;margin: 20px 0 8px;line-height: 1.2;}
+
+/* overflow-wrap  긴단어/URL도 깨짐 */
+.wf-comment {font-size: var(--comment);line-height: 1.7;color: #222;overflow-wrap: anywhere;word-break: breack-word;margin: 0;}
 
 /* 하단 */
-.wf-bottom {width: 100%;min-height: 120px;background: #F3EEFF;padding: 24px 0;}
+.wf-bottom {width: 100%;min-height: 120px;padding: 24px 0;}
 
 .wf-bottom .wf-wrap {display: flex; justify-content: center;}
 
 /* 버튼 */
-.wf-cta {width: 100%;max-width: 720px; height: 64px;border-radius: 4px; border: 0;background: var(--btn);font-size: 22px;font-weight: 900;letter-spacing: -0.3px;cursor: pointer;transition: transform 120ms ease, background-color 120ms ease, box-shadow 120ms ease;}
+.wf-cta {width: 100%;max-width: 720px; height: 64px;border-radius: 10px; border: 0;background: var(--btn);color: #111; font-size: clamp(16px,2.4vw,22px);font-weight: 900;letter-spacing: -0.3px;cursor: pointer;transition: transform 120ms ease, background-color 120ms ease, box-shadow 120ms ease,color 120ms ease;}
 
-.wf-cta:hover {background: var(--btn-hover);box-shadow: 0 12px 28px rgba(0,0,0,0.12);transform: translateY(-2px);}
+.wf-cta:hover {background: var(--btn-hover);color: #fff; box-shadow: 0 12px 28px rgba(0,0,0,0.12);transform: translateY(-2px);}
 
-.wf-cta:active {transform: translateY(0);box-shadow: 0 8px 18px rgba(0,0,0,0.14);}
+.wf-cta:active {background: var(--btn-hover);color: #fff; transform: translateY(0);box-shadow: 0 8px 18px rgba(0,0,0,0.14);}
 
 .wf-cta:focus-visible {outline: 3px solid rgba(107,111,191,0.35);outline-offset: 2px;}
 
-/* 반응형 */
-@media (max-width:768px){
-    .wf-label {
-        font-size: 16px;
-        padding: 6px 22px;
-        margin: 0 auto 14px;
+/* 반응형(태블릿 이하) */
+@media (max-width: 768px) {
+    .wf-top {
+        grid-template-columns: 1fr;
+        min-height: unset;
+        padding: 24px 0;
+        text-align: center;
     }
-    .wf-list {
-        width: 100%;
+
+    .wf-leftIcon {
+        width: min(260px, 70vw);
         margin: 0 auto;
-        gap: 18px;
     }
+
+    .wf-rightText {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .wf-tags {
+        margin-top: 18px;
+    }
+
     .wf-row {
-        grid-template-columns: 76px 1fr;
+        grid-template-columns: 68px 1fr;
         gap: 12px;
+        padding: 14px;
     }
+
     .wf-avatarBox {
-        width: 60px;
-        height: 60px;
+        width: 56px;
+        height: 56px;
     }
-    .wf-name {font-size: 16px;}
-    .wf-comment {font-size: 14px;line-height: 1.5s;}
+}
+
+/* 반응형(모바일) */
+@media (max-width:420px){
+    .wf-row {
+        grid-template-columns: 56px 1fr;
+        padding: 12px;
+    }
+
+    .wf-avatarBox {
+        width: 48px;
+        height: 48px;
+    }
+
+    .wf-cta {
+        height: 56px;
+        border-radius: 12px;
+    }
 }

@@ -131,7 +131,11 @@ const AIIntroduce = () => {
             <div className="notice">
                 <div className="notice-header">
                     <h2>게시판</h2>
-                    <button className="write-btn" onClick={() => navigate('/NoticeWrite')}>작성</button>
+                    <div className="notice-actions">
+                        <button className="my-board-btn" onClick={() => navigate("/NoticeMy")}>내 게시글</button>
+
+                        <button className="write-btn" onClick={() => navigate('/NoticeWrite')}>작성</button>
+                    </div>
                 </div>
 
                 <div className="notice-table">
