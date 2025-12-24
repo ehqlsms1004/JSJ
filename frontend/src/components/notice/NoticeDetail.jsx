@@ -51,8 +51,6 @@ export default function NoticeDetail() {
 
     // UI 상태
     const [newComment, setNewComment] = useState("");
-    const {nickName, setNickName} = useState("");
-    const [pw, setPw] = useState("");
 
     const formattedBody = useMemo(() => {
         // notice_write 줄바꿈 유지용
@@ -76,7 +74,7 @@ export default function NoticeDetail() {
     const onClickDelete = () => {
         // 실제로는 DELETE /notice/:id
         if (!window.confirm("정말 삭제할까요?")) return;
-        alert("삭제 퍼리 - 나중에 API 연결");
+        alert("삭제 처리 - 나중에 API 연결");
     };
 
     const onClickPrevNext = (targetId) => {
@@ -87,10 +85,21 @@ export default function NoticeDetail() {
     const onToggleCommentHeart = (commentId) => {
         setComments((prev) =>
             prev.map((c) =>
-                c.comment_id === commentId ? { ...c, ui_liked: !c.ui_liked } : c
+                (c.comment_id === commentId ? { ...c, ui_liked: !c.ui_liked } : c)
             )
         );
     };
+
+    const onkeyDownComment = (e) => {
+        // 한글 IME 조합 중 Enter 오작동 방지
+        if (e.isComposing) return;
+
+        // Enter = 등록, Shift+Enter = 줄바꿈
+        if (e.key === "Enter" && !e.shiftkey) {
+            e.preventDefault();     // 줄바꿈 막기
+            onSubmitComment(e);     // 기존 submit 로직 재사용
+        }
+    } ;
 
     const onSubmitComment = (e) => {
         e.preventDefault();
@@ -105,7 +114,7 @@ export default function NoticeDetail() {
             comment_id: nextId,
             notice_id: noticeData.notice_id,
             user_id: 999, // 로그인 유저 가정
-            author_name: "백기린", // 로그인 유저 닉네임 가정
+            author_name: "똥쟁이", // 로그인 유저 닉네임 가정
             comment_write: text,
             comment_new: new Date().toISOString().slice(0, 10),
             comment_delete: false,
@@ -137,9 +146,7 @@ export default function NoticeDetail() {
                     <div className="nd-metaRow">
                         <div className="nd-metaLeft">
                             <span className="nd-author">{noticeData.author_name}</span>
-                            <span className="nd-dot">•</span>
                             <span className="nd-date">{noticeData.notice_new}</span>
-                            <span className="nd-dot">•</span>
                             <span className="nd-views">
                                 조회수 {noticeData.notice_view_count ?? 0}
                             </span>
@@ -170,13 +177,15 @@ export default function NoticeDetail() {
 
                 {/* 이전/다음 + 수정/삭제 */}
                 <div className="nd-navRow">
-                    <button className="nd-navBtn" disabled={!noticeData.prev_notice_id} onClick={() => onClickPrevNext(noticeData.prev_notice_id)}>
-                        ← 이전글
-                    </button>
+                    <div className="nd-prevNext">
+                        <button className="nd-navBtn" disabled={!noticeData.prev_notice_id} onClick={() => onClickPrevNext(noticeData.prev_notice_id)}>
+                            ← 이전글
+                        </button>
 
-                    <button className="nd-navBtn" disabled={!noticeData.next_notice_id} onClick={() => onClickPrevNext(noticeData.next_notice_id)}>
-                        다음글 →
-                    </button>
+                        <button className="nd-navBtn" disabled={!noticeData.next_notice_id} onClick={() => onClickPrevNext(noticeData.next_notice_id)}>
+                            다음글 →
+                        </button>
+                    </div>
 
                     <div className="nd-actions">
                         <button className="nd-actionBtn nd-edit" onClick={onClickEdit}>
@@ -203,7 +212,6 @@ export default function NoticeDetail() {
                                     <div className="nd-commentTop">
                                         <div className="nd-commentMeta">
                                             <span className="nd-commentAuthor">{c.author_name}</span>
-                                            <span className="nd-dot">•</span>
                                             <span className="nd-commentDate">{c.comment_new}</span>
                                         </div>
 
@@ -220,10 +228,14 @@ export default function NoticeDetail() {
 
                     {/* 댓글 작성 */}
                     <form className="nd-commentForm" onSubmit={onSubmitComment}>
-                        <textarea className="nd-commentInput" value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="댓글을 입력하세요" />
-                        <button className="nd-commentSubmit" type="submit">
-                            등록
-                        </button>
+                        <div className="nd-commentBox">
+                            <textarea className="nd-commentInput" value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={onkeyDownComment} placeholder="댓글을 입력하세요" />
+                            <div className="nd-commentAction">
+                                <button className="nd-commentSubmit" type="submit">
+                                    등록
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
