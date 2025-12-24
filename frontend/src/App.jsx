@@ -1,6 +1,7 @@
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Route, Routes } from 'react-router-dom';
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 
 import Header from './components/common/Header.jsx'

@@ -12,10 +12,10 @@ export default function NoticeDetail() {
     // Mock Data (API로 교체)
     const [noticeData, setNoticeData] = useState({
         notice_id: 1,
-        user_id:10,
+        user_id: 10,
         author_name: "기린",
         notice_title: "[공지] 여기는 제목이 들어갈 칸",
-        notice_write:"안녕하세요. 이곳은 게시판 상세 페이지 입니다.\n• 들어갈 거: 글쓴이, 날짜, 좋아요 수\n•조회수는 빼",
+        notice_write: "안녕하세요. 이곳은 게시판 상세 페이지 입니다.\n• 들어갈 거: 글쓴이, 날짜, 좋아요 수\n•조회수는 빼",
         notice_image: "/img/notice_detail1.png",
         notice_view_count: 128,
         notice_like: 0,
@@ -24,7 +24,7 @@ export default function NoticeDetail() {
         notice_delete: false,
         // 이전 다음 (프레임용)
         prev_notice_id: 0,
-        prev_notice_id: 2,
+        next_notice_id: 2,
     });
 
     const [comments, setComments] = useState([
@@ -35,7 +35,7 @@ export default function NoticeDetail() {
             author_name: "태연",
             comment_write: "술먹고 죽었어요ㅎㅎ",
             comment_new: "2025-12-23",
-            comment_delete:false,
+            comment_delete: false,
             ui_liked: false,
         }, {
             comment_id: 2,
@@ -51,6 +51,8 @@ export default function NoticeDetail() {
 
     // UI 상태
     const [newComment, setNewComment] = useState("");
+    const {nickName, setNickName} = useState("");
+    const [pw, setPw] = useState("");
 
     const formattedBody = useMemo(() => {
         // notice_write 줄바꿈 유지용
@@ -62,11 +64,11 @@ export default function NoticeDetail() {
         // 실제로는: POST /notice/:id/like
         setNoticeData((prev) => ({
             ...prev,
-            notice_like: (prev.notice_like || 0) +1,
+            notice_like: (prev.notice_like || 0) + 1,
         }));
     };
 
-    const onClick = () => {
+    const onClickEdit = () => {
         // 실제로는 navigater(`/notice/edit/${notice_id}`)
         alert("수정 버튼 - 나중에 라우팅 연결");
     };
@@ -82,10 +84,10 @@ export default function NoticeDetail() {
         alert(`이동(프레임): notice_id = ${targetId} 로 라우팅/조회`);
     };
 
-    const onToggleCommentHeart = (commetnId) => {
+    const onToggleCommentHeart = (commentId) => {
         setComments((prev) =>
             prev.map((c) =>
-                c.comment_id === commentId ? { ...c, ui_liked: !c/ui_lied } : c
+                c.comment_id === commentId ? { ...c, ui_liked: !c.ui_liked } : c
             )
         );
     };
@@ -105,9 +107,9 @@ export default function NoticeDetail() {
             user_id: 999, // 로그인 유저 가정
             author_name: "백기린", // 로그인 유저 닉네임 가정
             comment_write: text,
-            comment_new: new Data().toISOString().slice(0, 10),
+            comment_new: new Date().toISOString().slice(0, 10),
             comment_delete: false,
-            ui_lied: false,
+            ui_liked: false,
         };
 
         setComments((prev) => [added, ...prev]);
@@ -143,8 +145,86 @@ export default function NoticeDetail() {
                             </span>
                         </div>
 
-                        
+                        <button className="nd-likeBtn" onClick={onClickLikeNotice}>
+                            좋아요 <b>{noticeData.notice_like ?? 0}</b>
+                        </button>
                     </div>
+                </div>
+
+                <div className="nd-divider" />
+
+                {/* 본문 */}
+                <div className="nd-body">
+                    {formattedBody.map((line, idx) => (
+                        <p key={idx} className="nd-bodyLine">
+                            {line}
+                        </p>
+                    ))}
+
+                    {noticeData.notice_image ? (
+                        <div className="nd-imageWrap">
+                            <img className="nd-image" src={noticeData.notice_image} alt="공지 이미지" />
+                        </div>
+                    ) : null}
+                </div>
+
+                {/* 이전/다음 + 수정/삭제 */}
+                <div className="nd-navRow">
+                    <button className="nd-navBtn" disabled={!noticeData.prev_notice_id} onClick={() => onClickPrevNext(noticeData.prev_notice_id)}>
+                        ← 이전글
+                    </button>
+
+                    <button className="nd-navBtn" disabled={!noticeData.next_notice_id} onClick={() => onClickPrevNext(noticeData.next_notice_id)}>
+                        다음글 →
+                    </button>
+
+                    <div className="nd-actions">
+                        <button className="nd-actionBtn nd-edit" onClick={onClickEdit}>
+                            수정
+                        </button>
+
+                        <button className="nd-actionBtn nd-del" onClick={onClickDelete}>
+                            삭제
+                        </button>
+                    </div>
+                </div>
+
+                <div className="nd-divider" />
+
+                {/* 댓글 */}
+                <div className="nd-comments">
+                    <div className="nd-commentsHeader">댓글 {comments.filter(c => !c.comment_delete).length}</div>
+
+                    <ul className="nd-commentList">
+                        {comments
+                            .filter((c) => !c.comment_delete)
+                            .map((c) => (
+                                <li className="nd-commentItem" key={c.comment_id}>
+                                    <div className="nd-commentTop">
+                                        <div className="nd-commentMeta">
+                                            <span className="nd-commentAuthor">{c.author_name}</span>
+                                            <span className="nd-dot">•</span>
+                                            <span className="nd-commentDate">{c.comment_new}</span>
+                                        </div>
+
+                                        <button className={`nd-heartBtn ${c.ui_liked ? "is-liked" : ""}`} onClick={() => onToggleCommentHeart(c.comment_id)} aria-label="댓글 좋아요">
+                                            {c.ui_liked ? "♥" : "♡"}
+                                        </button>
+                                    </div>
+
+                                    <div className="nd-commentBody">{c.comment_write}</div>
+                                </li>
+                            ))
+                        }
+                    </ul>
+
+                    {/* 댓글 작성 */}
+                    <form className="nd-commentForm" onSubmit={onSubmitComment}>
+                        <textarea className="nd-commentInput" value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="댓글을 입력하세요" />
+                        <button className="nd-commentSubmit" type="submit">
+                            등록
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
