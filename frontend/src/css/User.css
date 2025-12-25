@@ -1,0 +1,108 @@
+/* ---------------------------------------------- */
+/* 회원가입 */
+/* ---------------------------------------------- */
+.signup-bs-container {max-width: 1200px;}
+.signup-bs-page { background: #fff;}
+
+.text-center {padding: 50px; margin-bottom: 30px; background-color: #f3eeffa4;}
+.sns_login_text {font-size: 25px; font-weight: 400; padding-bottom: 10px;}
+
+ .signup-bs-divider {height: 2px; background: #c9c9ff;}
+
+ .signup-bs-arrow {color: #d11; font-weight: 800;font-size: 13px;}
+ .signup-bs-arrow span {margin: 0 6px;}
+
+ .signup-bs-sns .btn {border-radius: 10px; font-weight: 800;border: 1px solid #e6e6e6; display: flex;align-items: center;justify-content: center;gap: 10px;}
+
+ .signup-bs-badge {width: 26px;height: 26px;border-radius: 7px;display: inline-flex;align-items: center;justify-content: center;font-weight: 900;}
+
+
+
+
+.signup_title {width: 100px; height: 35px; font-size: 23px; margin: 20px 0 20px 0; border-bottom: 2px solid #c9c9ff; display: flex; justify-content: center;}
+
+ /* 부가정보 배경 섹션 */
+ .signup-bs-alt td {background: #c9c9ff;}
+ .signup-bs-left.alt {background: #fff;}
+
+ /* 회원정보 입력 gird */
+ .signup-bs-gird {display: grid; grid-template-columns: 90px 1fr;gap: 10px 12px;align-items: center;}
+.signup-bs-label {font-size: 13px;font-weight: 700;}
+.signup-bs-label2 {font-size: 13px; font-weight: 700;}
+
+/* 버튼 */
+.signup-bs-avatar {display: flex;flex-direction: column;align-items: center;}
+
+.social-login{width: 100%; max-width: 520px; margin: 0 auto; display: grid; gap: 14px;}
+
+.social-btn{width: 100%; height: 50px; border-radius: 12px; border: 1px solid transparent; display: flex; align-items: center; justify-content: center; position: relative; font-size: 18px; font-weight: 700; letter-spacing: -0.2px; cursor: pointer;}
+
+.social-icon{position: absolute; left: 18px; width: 26px; height: 26px;}
+.social-icon.naver {width: 22px; height: 22px; left: 21px;}
+
+.social-text{line-height: 1;}
+
+.social-btn.kakao{background: #FEE500; color: #000; border-color: #FEE500;}
+.social-btn.naver{background: #03C75A; color: #fff; border-color: #03C75A;}
+.social-btn.google{background: #fff; color: #111; border: 2px solid #e8e8e8;}
+
+/* ✅ 반응형 */
+@media (max-width: 480px){
+  .social-login{
+    max-width: 100%;
+    padding: 0 14px;
+  }
+
+  .social-btn{
+    height: 52px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+
+  .social-icon{
+    left: 14px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* ---------------------------------------------- */
+/* 로그인 */
+/* ---------------------------------------------- */
+.login-page {height: 800px;display: grid; place-items: center;}
+.login-card {width: 420px; height: 650px; background-color: #F3EEFF;padding: 34px 34px 28px;box-shadow: 0 10px 30px rgba(0,0,0,0.08);}
+
+.login-avatar {width: 150px;height: 150px; border-radius: 999px; background-color: white;margin: 0 auto 18px;display: grid;place-items: center;}
+.login-avatar img {width: 100px;height: 100px;object-fit: contain;}
+
+.login-form {display: grid;gap: 10px;}
+.login-label {font-size: 22px;font-weight: 800;color: #111;margin-top: 6px;}
+.login-input {height:44px;border: 0;outline: none;background-color: #fff;padding: 0 12px;font-size: 16px;}
+
+.login-forgot {margin-top: 6px;background: transparent;border: 0;padding: 0;text-align: left;color: #222;font-size: 14px;cursor: pointer;}
+
+.btn-login {margin-top: 8px;height: 52px;border: 0;background: #9b96d8;color: #fff;font-size: 24px;font-weight: 800;cursor: pointer;}
+.btn-signup {height: 52px;border: 0;background: #c8c5ff;color: #111;font-size: 26px; font-weight: 900;cursor: pointer;}
+
+.social-row {display: flex;justify-content: space-between;gap: 18px;margin-top: 18px;}
+.social {width: 64px;height: 64px;border-radius: 999px;border: 0;font-size: 30px;font-weight: 900;cursor: pointer;}
+
+.social.N {background: #22c55e;color: #fff;}
+.social.K {background: #fde647;color: #111;}
+.social.G {background: #6366f1;color: #fff;}
+
+@media (max-width:400px){
+    .login-card {width: caic(100vh - 32px);}
+}
+
+
+/* ---------------------------------------------- */
+/* 마이페이지 */
+/* ---------------------------------------------- */
+.mypage-content {max-width: 1000px; margin: 50px auto;}
+.mypage-img {max-width: 300px; margin-top: -30px;}
+.mypage-box {display:flex; border-top:5px solid #6868AC; padding:10px 0px; align-items:center; max-width: 400px;}
+.mypage-moneybox {display:flex;  align-items:center; max-width: 400px;}
+.mypage-money {display: flex; border-radius: 5px; border:2px solid #c5c5c563; min-width: 200px; min-height: 40px; align-items: center; padding-left: 5px; margin-right: 10px;}
+.mypage-membership {min-height: 355px; border: 2px solid #6868ac4a; border-radius: 10px; padding: 15px 0 0 10px;}
+.mypage-membership1 {min-height: 355px; border: 2px solid #6868ac4a; border-radius: 10px; padding: 15px 10px 0 10px;}

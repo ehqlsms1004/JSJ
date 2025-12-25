@@ -120,7 +120,6 @@ const AIIntroduce = () => {
             <div className="service_section">
                 <div className="membership_img">
                     <Container className="membership_text">
-                            <p>님의 <br /> 맴버십 전용 혜택!</p>
                         <Row>
                             <Col xs={6} md={4}>
                                 <Image src='/img/Membership.gif' alt="멤버십_가입_소개_gif파일" className="membership_gif" roundedCircle />

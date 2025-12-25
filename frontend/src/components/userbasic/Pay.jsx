@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import '../../css/Pay.css'
 
 export default function Pay() {
     // /예시 금액(props/라우팅 state로 받기)
