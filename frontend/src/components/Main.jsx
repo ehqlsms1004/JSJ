@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 const AIIntroduce = () => {
     const [noticeData, setNoticeData] = useState([]);
+    const [basicAI_Data, setBasicAI_Data] = useState([]);
     const [Loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -28,38 +29,56 @@ const AIIntroduce = () => {
 
     // API 데이터 불러오기
     useEffect(() => {
-        if (document.body.dataset.apiLoaded === 'true') return;  //호출 2번되는거 방지하기
-        document.body.dataset.apiLoaded = 'true';
+        if (fetchedRef.current) return;
+        fetchedRef.current = true;
 
-        const noticeData = async () => {
+        const fetchAllData = async () => {
             try {
-                const data = await MainSummary();  //API 호출
-                console.log("✅ 메인 데이터 불러오기 성공!", data);  //성공 로그 후에 삭제 가능
+                // MainSummary() 한 번만 호출!
+                const data = await MainSummary();
+                console.log("✅ 메인 데이터 불러오기 성공!", data);
 
-                if (data && data.success && Array.isArray(data.notice)) {
-                    // Notice 데이터 매핑 (API 필드 → 기존 구조 맞춤)
+                // 게시판 데이터 처리
+                if (data?.success && Array.isArray(data.notice)) {
                     const mappedNoticeData = data.notice.map((item) => ({
                         id: item.notice_id,
                         title: item.notice_title,
                         writer: item.user_nickname,
                         views: item.notice_view_count
                     }));
-
                     setNoticeData(mappedNoticeData);
                 } else {
-                    console.warn("⚠️ 데이터 성공이지만 notice 배열 없음");
+                    console.warn("⚠️ 게시판 데이터 없음:", data?.notice);
                     setNoticeData([]);
                 }
+
+                // BasicAI 데이터 처리 (같은 response에서)
+                if (data?.success && Array.isArray(data.basic_ai)) {
+                    const mappedBasicAIData = data.basic_ai.map((item) => ({
+
+                        name: item.ai_name,
+                        tip: item.ai_tip,
+                        image: item.ai_image,
+                        route: item.ai_content
+                    }));
+                    setBasicAI_Data(mappedBasicAIData);
+                } else {
+                    console.warn("⚠️ BasicAI 데이터 없음:", data?.basic_ai);
+                    setBasicAI_Data([]);
+                }
+
             } catch (error) {
                 console.error("❌ 메인 데이터 불러오기 실패:", error);
                 setNoticeData([]);
+                setBasicAI_Data([]);
             } finally {
                 setLoading(false);
             }
         };
 
-        noticeData();
-    }, [     ]);
+        fetchAllData();
+    }, []);
+
 
     // 총 페이지 수
     const totalPages = useMemo(() => {
@@ -133,6 +152,28 @@ const AIIntroduce = () => {
                 <Container className="AiCategory_container">
                     <Row className="circle_Row">
                         <h1>Basic Category</h1>
+            {Loading ? (
+                <div style={{ padding: 20, textAlign: "center", width: "100%" }}>
+                    카테고리 불러오는 중...
+                </div>
+            ) : basicAI_Data.length > 0 ? (
+                basicAI_Data.slice(0, 6).map((item, index) => (  // 최대 6개만)
+                    <Col key={item.name || index} xs={6} md={4} className="AICategory_circle" onClick={() => navigate(`/${item.route}`)}>
+                        <div className="circle_div">
+                            <Image
+                                src={item.image || `/img/default-category-${index + 1}.png`}
+                                roundedCircle
+                            />
+                            <div className="circle_text d-none d-lg-block">
+                                <h2>{item.name}</h2>
+                                <p>{item.tip}</p>
+                            </div>
+                        </div>
+                    </Col>
+                ))
+            ) : (
+                // 기본 정적 데이터 (API 실패시)
+                <>
                         <Col xs={6} md={4} className="AICategory_circle">
                             <div className="circle_div">
                                 <Image src="/img/Business.png" roundedCircle />
@@ -192,6 +233,9 @@ const AIIntroduce = () => {
                                 </div>
                             </div>
                         </Col>
+                </>
+            )}
+
                     </Row>
                 </Container>
             </div>

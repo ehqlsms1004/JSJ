@@ -47,6 +47,7 @@ def get_main_summary():
             "ai_name": ai.ai_name,
             "ai_tip": ai.ai_tip,
             "ai_image": ai.ai_image,
+            "ai_content":ai.ai_content
 
         }
         for ai in AIs

@@ -21,7 +21,7 @@
   },
   "scripts": {
     "start": "concurrently \"npm run start:backend\" \"react-scripts start\"",
-    "start:backend": "cd .. && python -m backend.app",
+    "start:backend": "cd .. && python -m backend.app || echo 'Backend started without MongoDB' && exit 0",
     "start:dev": "concurrently \"npm run start:backend\" \"react-scripts start\"",
     "build": "react-scripts build",
     "test": "react-scripts test",

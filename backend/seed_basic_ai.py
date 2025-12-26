@@ -37,22 +37,23 @@ def seed_basic_ai():
 
         # 8개 기본 AI
         configs = {
-            'wellness': ('🌿 웰니스 코치', '#웰니스,#멘탈케어'),
-            'career': ('🚀 커리어 멘토', '#커리어,#진로'),
-            'finance': ('💰 금융 가이드', '#재테크,#투자'),
-            'health': ('🏥 건강 매니저', '#건강,#다이어트'),
-            'daily': ('📅 데일리 도우미', '#일상,#생산성'),
-            'learning': ('✍️ 학습 서포터', '#공부,#학습'),
-            'legal': ('⚖️ 법률 자문', '#법률,#상담'),
-            'tech': ('💻 테크 가이드', '#프로그래밍,#개발')
+            'wellness': ('🌿 웰니스 코치', '#웰니스,#멘탈케어',"마음과 몸의 균형을 찾아드립니다"),
+            'career': ('🚀 커리어 멘토', '#커리어,#진로'," 꿈의 직업으로 안내합니다."),
+            'finance': ('💰 금융 가이드', '#재테크,#투자',"부의 성장을 도와드립니다"),
+            'health': ('🏥 건강 매니저', '#건강,#다이어트',"건강한 생활을 관리합니다"),
+            'daily': ('📅 데일리 도우미', '#일상,#생산성', "효율적인 하루를 만들어드립니다"),
+            'learning': ('✍️ 학습 서포터', '#공부,#학습', "쉽고 빠른 학습을 지원합니다"),
+            'legal': ('⚖️ 법률 자문', '#법률,#상담',"법적 고민을 해결합니다"),
+            'tech': ('💻 테크 가이드', '#프로그래밍,#개발',"최신 기술을 쉽게 배웁니다")
         }
 
         # 데이터 생성 & 저장
-        for key, (title, hashtags) in configs.items():
+        for key, (title, hashtags,tip) in configs.items():
             ai = BasicAI(
                 ai_name=title,
                 ai_type=False,
-                ai_content=f"{title}입니다. 전문가처럼 도와드릴게요!",
+                ai_tip=tip,
+                ai_content=key,
                 ai_hashtag=hashtags,
                 ai_price=0,
                 ai_image=f"/static/images/ai/{key}.png",
