@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, render_template, request, jsonify, session, current_app
 from openai import OpenAI
 from dotenv import load_dotenv
-from backend.models import db, ChatLog, UseBox  # UseBox 모델 임포트 추가
+from backend.models import db, ChatLog, UseBox
 from datetime import datetime, timezone
 
 load_dotenv()
@@ -14,13 +14,24 @@ load_dotenv()
 bp = Blueprint('daily_chat', __name__, url_prefix='/daily')
 
 # --- 챗봇 환경 설정 ---
-USER_NAME = "자유로움"
+# [수정] 고정 닉네임 제거 및 기본값 설정
+DEFAULT_NAME = "사용자"
 CHAT_TITLE = "일상생활 문제 해결 챗봇"
 
-# 시스템 페르소나 설정 (기존 내용 100% 유지)
+# 시스템 페르소나 설정 (기존 내용 유지하되 닉네임 주입 가능하도록 설정)
 SYSTEM_PROMPT = """
 당신은 요리 레시피부터 가전제품 사용법, 육아 및 반려동물 돌봄 노하우, 주택 관리 팁, 특정 지역의 생활 정보까지, 일상에서 마주하는 다양한 문제들을 해결해 드리는 '친절하고 만능인 생활 도우미' 챗봇입니다.
 사용자 이름: {user_name}
+
+[범위 제한 및 거절 지침 - 최우선 순위]
+
+당신의 답변 권한은 오직 **'일상적인 안부 및 가벼운 일반 대화'**에만 엄격히 국한됩니다.
+
+위 전문 분야와 직접적인 관련이 없는 모든 전문 주제(의료 진단, 법률 자문, 금융 투자, 심리 상담 등)에 대해서는 단 한 문장의 정보도 제공하지 마십시오.
+
+질문이 가벼운 일상이 아닌 전문적인 상담을 요구한다고 판단되면 즉시 아래 **[거절 템플릿]**만을 출력하십시오.
+
+[거절 템플릿] "죄송합니다, {user_name}님. 저는 일상 대화 챗봇으로서 [사용자가 요청한 주제]와 같은 전문적인 진단이나 자문 분야에 대해서는 도움을 드릴 수 없습니다. 대신 가벼운 일상 이야기나 일반적인 정보에 대해 궁금한 점이 있으시다면 기꺼이 대화해 드리겠습니다."
 
 [페르소나 & 역할]
 1. 성격: 다양한 일상생활 질문에 대해 빠르고 정확하게 답해주며, 사용자의 편의를 최우선으로 생각하는 똑똑한 도우미입니다.
@@ -30,11 +41,6 @@ SYSTEM_PROMPT = """
 
 [답변 가이드라인]
 1. 출력 형식: 답변 내용은 마크다운 형식(헤딩, 볼드, 목록)을 사용하여 가독성 높게 작성하며, 단계별 해결 가이드는 명확한 목록으로 제시합니다.
-
-[범위 제한 및 거절 지침]
-5. 역할 및 범위 제한 (필수): 당신은 오직 일반적인 일상생활 정보 및 문제 해결 팁 제공에 국한됩니다.
-6. 범위 이탈 시 대응 (최우선): 생명/안전에 직결되는 전문적인 진단/수리(가스 누출, 전기 합선 등), 법률 자문, 의료 진단, 금융 컨설팅 등 비일상생활 전문 분야의 질문이 들어오면 반드시 아래 거절 템플릿을 사용하여 단호하게 거절하십시오.
-    * 거절 템플릿: "저는 일상생활 문제 해결 챗봇으로서 [사용자가 요청한 주제]와 같은 전문적인 진단이나 안전에 직결되는 기술적인 조언을 직접 제공할 수 없습니다. 저는 오직 일반적인 생활 정보와 팁을 안내해 드릴 수 있습니다. 다른 일상생활 관련 궁금한 점이 있으시다면 기꺼이 조언해 드리겠습니다."
 
 [면책 조항]
 7. 면책 조항: 답변의 마지막에 "⭐ 중요: 이 챗봇은 생활 정보를 제공하지만, 전문적인 진단이나 수리, 안전에 직결되는 기술적인 조언을 직접 대체할 수 없습니다. 중요한 문제에 대해서는 해당 분야의 전문가와 상담하시길 권장합니다."라는 면책 조항을 포함합니다.
@@ -56,13 +62,14 @@ except Exception as e:
 # --- 1. 초기 안내 데이터 제공 (/daily/) ---
 @bp.route('/')
 def chat_usage():
-    user_name = session.get('user_name', USER_NAME)
+    # [수정] 실시간 닉네임 확보 (우선순위: user_nickname -> user_name -> 기본값)
+    user_name = session.get('user_nickname') or session.get('nickname') or session.get('user_name') or session.get('name') or DEFAULT_NAME
     user_id = session.get('user_id')
 
-    # 기존 상세 안내 문구 유지
+    # [수정] intro_html 내의 닉네임 누락 및 고정 이름 수정
     chat_intro_html = f"""
     <div class="initial-text" style="margin-top: 5px;">
-        <b>환영합니다!</b> {user_name}님의 편리하고 스마트한 일상을 위한 '일상생활 문제 해결' 챗봇입니다
+        <b>환영합니다, {user_name}님!</b> {user_name}님의 편리하고 스마트한 일상을 위한 '일상생활 문제 해결' 챗봇입니다
     </div>
     <div class="initial-text" style="margin-top: 10px; margin-bottom: 10px;">
         오늘 저녁 메뉴 고민, 새로 산 가전제품 사용법, 아이와 즐거운 시간을 보내는 방법, 반려동물 양육 팁, 집수리 노하우, 이웃 지역 정보까지! 삶의 질을 높이고 일상 속 불편함을 해소하기 위한 모든 질문에 제가 명쾌한 답변을 드릴 준비가 되어 있습니다.
@@ -79,7 +86,8 @@ def chat_usage():
     <div class="initial-text" style="margin-top: 10px; margin-bottom: 10px;">
         <span style="color: red; font-weight: bold;">꼭 기억해주세요!</span>
         <p>이 챗봇은 다양한 생활 정보를 제공하지만, 전문적인 진단이나 수리, 안전에 직결되는 기술적인 조언을 직접 대체할 수 없습니다. 중요한 문제에 대해서는 해당 분야의 전문가와 상담하시길 권장합니다.</p>
-    </div><p>자, 이제 {user_name}님의 일상 이야기를 들려주세요. 제가 함께할게요!</p>
+    </div>
+    <p style="margin-top: 10px;">자, 이제 <b>{user_name}님</b>의 일상 이야기를 들려주세요. 제가 함께할게요!</p>
     """
 
     return jsonify({
@@ -98,16 +106,17 @@ def ask():
         return jsonify({'response': 'Error: OpenAI API Key missing.'}), 500
 
     current_user_id = session.get('user_id', 1)
-    print(f"[Daily/Ask] Processing for User ID: {current_user_id}")
+    # [수정] 질문 처리 시에도 실시간 닉네임 사용
+    user_name = session.get('user_nickname') or session.get('user_name') or DEFAULT_NAME
 
     try:
         data = request.get_json()
         user_message = data.get('message', '')
-        user_name = session.get('user_name', USER_NAME)
 
         if not user_message:
             return jsonify({'response': '메시지를 입력해주세요.'}), 400
 
+        # [수정] 페르소나에 실제 닉네임 주입
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT.format(user_name=user_name)},
             {"role": "user", "content": user_message}
@@ -116,15 +125,14 @@ def ask():
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=messages,
-            temperature=0.7
+            temperature=0.1
         )
 
         ai_response = response.choices[0].message.content.strip()
 
-        # --- 하이브리드 저장 로직 수정 (SQL + MongoDB + Vector DB) ---
+        # --- 하이브리드 저장 로직 ---
         try:
-            # 1. UseBox 권한 확인 및 생성 (데일리 도우미 ai_id = 5)
-            DAILY_AI_ID = 5
+            DAILY_AI_ID = 5  # 예시 ID 유지
             usebox = UseBox.query.filter_by(user_id=current_user_id, ai_id=DAILY_AI_ID).first()
 
             if not usebox:
@@ -132,7 +140,6 @@ def ask():
                 db.session.add(usebox)
                 db.session.commit()
 
-            # 2. SQL 저장 (수정된 DB 구조: usebox_id 사용)
             new_log = ChatLog(
                 usebox_id=usebox.use_id,
                 question=user_message,
@@ -143,7 +150,6 @@ def ask():
             db.session.commit()
             sql_id = new_log.id
 
-            # 3. MongoDB 저장 (Atlas)
             mongodb = getattr(current_app, 'mongodb', None)
             if mongodb is not None:
                 try:
@@ -156,11 +162,9 @@ def ask():
                         "answer": ai_response,
                         "timestamp": datetime.now(timezone.utc)
                     })
-                    print(">>> [SUCCESS] Daily data saved to MongoDB Atlas!")
                 except Exception as mongo_err:
                     print(f"[Daily Mongo Error] {mongo_err}")
 
-            # 4. Vector DB 저장
             vector_db = getattr(current_app, 'vector_db', None)
             if vector_db is not None:
                 try:
@@ -171,8 +175,6 @@ def ask():
                     )
                 except Exception as vec_err:
                     print(f"[Daily Vector Error] {vec_err}")
-
-            print(f"[Daily] Hybrid Storage Success: User {current_user_id}")
 
         except Exception as db_err:
             db.session.rollback()
@@ -189,9 +191,10 @@ def ask():
 @bp.route('/report', methods=['GET'])
 def generate_report():
     user_id = session.get('user_id', 1)
+    # [수정] 리포트용 사용자 이름 확보
+    user_name = session.get('user_nickname') or session.get('user_name') or DEFAULT_NAME
 
     try:
-        # UseBox 조인을 통해 데일리(ai_id=5) 기록만 필터링
         history = ChatLog.query.join(UseBox).filter(
             UseBox.user_id == user_id,
             UseBox.ai_id == 5
@@ -206,8 +209,8 @@ def generate_report():
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system",
-                 "content": "당신은 만능 생활 도우미입니다. 최근 대화 내용을 분석하여 사용자의 주요 관심사와 유용한 생활 팁을 정리한 보고서를 마크다운 형식으로 작성하세요."},
-                {"role": "user", "content": f"일상생활 상담 분석 보고서 작성:\n\n{chat_data}"}
+                 "content": f"당신은 만능 생활 도우미입니다. {user_name}님의 최근 대화 내용을 분석하여 주요 관심사와 유용한 생활 팁을 정리한 보고서를 마크다운 형식으로 작성하세요."},
+                {"role": "user", "content": f"{user_name}님의 일상생활 상담 분석 보고서 작성:\n\n{chat_data}"}
             ]
         )
 
