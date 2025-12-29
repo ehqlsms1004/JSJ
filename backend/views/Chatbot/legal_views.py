@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, render_template, request, jsonify, session, current_app
 from openai import OpenAI
 from dotenv import load_dotenv
-from backend.models import db, ChatLog
+from backend.models import db, ChatLog, UseBox  # UseBox 모델 임포트 추가
 from datetime import datetime, timezone
 
 load_dotenv()
@@ -17,7 +17,7 @@ bp = Blueprint('legal_chat', __name__, url_prefix='/legal')
 USER_NAME = "자유로움"
 CHAT_TITLE = "법률 및 생활 규제 정보 챗봇"
 
-# 시스템 페르소나 설정
+# 시스템 페르소나 설정 (기존 내용 100% 유지)
 SYSTEM_PROMPT = """
 당신은 일상생활에서 마주할 수 있는 법적 문제(계약, 분쟁, 소비)나 새로운 법규 해석, 부동산/주택 관련 법률, 노동법 등 쉽고 정확한 법률 및 규제 정보를 제공하는 '명쾌하고 신뢰할 수 있는 법률 어드바이저' 챗봇입니다.
 사용자 이름: {user_name}
@@ -120,12 +120,20 @@ def ask():
 
         ai_response = response.choices[0].message.content.strip()
 
-        # --- 하이브리드 저장 로직 ---
+        # --- 하이브리드 저장 로직 수정 (SQL + MongoDB + Vector DB) ---
         try:
-            # 1. SQL 저장
+            # 1. UseBox 권한 확인 및 생성 (법률 자문 ai_id = 7)
+            LEGAL_AI_ID = 7
+            usebox = UseBox.query.filter_by(user_id=current_user_id, ai_id=LEGAL_AI_ID).first()
+
+            if not usebox:
+                usebox = UseBox(user_id=current_user_id, ai_id=LEGAL_AI_ID)
+                db.session.add(usebox)
+                db.session.commit()
+
+            # 2. SQL 저장 (usebox_id 필드 사용)
             new_log = ChatLog(
-                user_id=current_user_id,
-                category='legal',
+                usebox_id=usebox.use_id,
                 question=user_message,
                 answer=ai_response,
                 created_at=datetime.now(timezone.utc)
@@ -134,22 +142,24 @@ def ask():
             db.session.commit()
             sql_id = new_log.id
 
-            # 2. MongoDB 저장 (is not None 필수)
+            # 3. MongoDB 저장 (Atlas)
             mongodb = getattr(current_app, 'mongodb', None)
             if mongodb is not None:
                 try:
                     mongodb.chat_history.insert_one({
                         "sql_id": sql_id,
+                        "usebox_id": usebox.use_id,
                         "user_id": current_user_id,
                         "category": "legal",
                         "question": user_message,
                         "answer": ai_response,
                         "timestamp": datetime.now(timezone.utc)
                     })
+                    print(">>> [SUCCESS] Legal data saved to MongoDB Atlas!")
                 except Exception as mongo_err:
                     print(f"[Legal Mongo Error] {mongo_err}")
 
-            # 3. Vector DB 저장 (is not None 필수)
+            # 4. Vector DB 저장
             vector_db = getattr(current_app, 'vector_db', None)
             if vector_db is not None:
                 try:
@@ -180,9 +190,11 @@ def generate_report():
     user_id = session.get('user_id', 1)
 
     try:
-        history = ChatLog.query.filter_by(user_id=user_id, category='legal') \
-            .order_by(ChatLog.created_at.desc()) \
-            .limit(5).all()
+        # UseBox 조인을 통해 법률(ai_id=7) 기록만 필터링
+        history = ChatLog.query.join(UseBox).filter(
+            UseBox.user_id == user_id,
+            UseBox.ai_id == 7
+        ).order_by(ChatLog.created_at.desc()).limit(5).all()
 
         if not history:
             return jsonify({'error': '상담 내역이 부족합니다.'}), 404

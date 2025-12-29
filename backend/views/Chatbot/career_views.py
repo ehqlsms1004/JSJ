@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, render_template, request, jsonify, session, current_app
 from openai import OpenAI
 from dotenv import load_dotenv
-from backend.models import db, ChatLog
+from backend.models import db, ChatLog, UseBox  # UseBox 모델 임포트 유지
 from datetime import datetime, timezone
 
 load_dotenv()
@@ -17,7 +17,7 @@ bp = Blueprint('career_chat', __name__, url_prefix='/career')
 USER_NAME = "자유로움"
 CHAT_TITLE = "커리어 개발 및 취업 준비 챗봇"
 
-# 시스템 페르소나 설정
+# 시스템 페르소나 설정 (기존 내용 유지)
 SYSTEM_PROMPT = """
 당신은 사용자의 경력 발전과 성공적인 취업을 위한 실질적인 정보와 전략을 제공하는 '스마트하고 전략적인 커리어 멘토' 챗봇입니다.
 사용자 이름: {user_name}
@@ -110,12 +110,20 @@ def ask():
 
         ai_response = response.choices[0].message.content.strip()
 
-        # --- 하이브리드 저장 로직 (SQL + MongoDB + Vector DB) ---
+        # --- 하이브리드 저장 로직 수정 ---
         try:
-            # 1. SQL 저장
+            # 1. UseBox 권한 확인 및 생성 (커리어 멘토 ai_id = 5)
+            CAREER_AI_ID = 5
+            usebox = UseBox.query.filter_by(user_id=current_user_id, ai_id=CAREER_AI_ID).first()
+
+            if not usebox:
+                usebox = UseBox(user_id=current_user_id, ai_id=CAREER_AI_ID)
+                db.session.add(usebox)
+                db.session.commit()
+
+            # 2. SQL 저장 (usebox_id 필드 사용)
             new_log = ChatLog(
-                user_id=current_user_id,
-                category='career',
+                usebox_id=usebox.use_id,
                 question=user_message,
                 answer=ai_response,
                 created_at=datetime.now(timezone.utc)
@@ -124,22 +132,24 @@ def ask():
             db.session.commit()
             sql_id = new_log.id
 
-            # 2. MongoDB 저장 (안전한 None 비교)
+            # 3. MongoDB 저장 (Atlas)
             mongodb = getattr(current_app, 'mongodb', None)
             if mongodb is not None:
                 try:
                     mongodb.chat_history.insert_one({
                         "sql_id": sql_id,
+                        "usebox_id": usebox.use_id,
                         "user_id": current_user_id,
                         "category": "career",
                         "question": user_message,
                         "answer": ai_response,
                         "timestamp": datetime.now(timezone.utc)
                     })
+                    print(">>> [SUCCESS] Career data saved to MongoDB Atlas!")
                 except Exception as mongo_err:
                     print(f"[Career Mongo Error] {mongo_err}")
 
-            # 3. Vector DB 저장 (안전한 None 비교)
+            # 4. Vector DB 저장
             vector_db = getattr(current_app, 'vector_db', None)
             if vector_db is not None:
                 try:
@@ -170,9 +180,11 @@ def generate_report():
     user_id = session.get('user_id', 1)
 
     try:
-        history = ChatLog.query.filter_by(user_id=user_id, category='career') \
-            .order_by(ChatLog.created_at.desc()) \
-            .limit(5).all()
+        # UseBox 조인을 통해 커리어(ai_id=5) 기록만 필터링
+        history = ChatLog.query.join(UseBox).filter(
+            UseBox.user_id == user_id,
+            UseBox.ai_id == 5
+        ).order_by(ChatLog.created_at.desc()).limit(5).all()
 
         if not history:
             return jsonify({'error': '상담 내역이 부족합니다.'}), 404

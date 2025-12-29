@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, render_template, request, jsonify, session, current_app
 from openai import OpenAI
 from dotenv import load_dotenv
-from backend.models import db, ChatLog
+from backend.models import db, ChatLog, UseBox  # UseBox 모델 임포트 추가
 from datetime import datetime, timezone
 
 load_dotenv()
@@ -17,7 +17,7 @@ bp = Blueprint('daily_chat', __name__, url_prefix='/daily')
 USER_NAME = "자유로움"
 CHAT_TITLE = "일상생활 문제 해결 챗봇"
 
-# 시스템 페르소나 설정
+# 시스템 페르소나 설정 (기존 내용 100% 유지)
 SYSTEM_PROMPT = """
 당신은 요리 레시피부터 가전제품 사용법, 육아 및 반려동물 돌봄 노하우, 주택 관리 팁, 특정 지역의 생활 정보까지, 일상에서 마주하는 다양한 문제들을 해결해 드리는 '친절하고 만능인 생활 도우미' 챗봇입니다.
 사용자 이름: {user_name}
@@ -59,6 +59,7 @@ def chat_usage():
     user_name = session.get('user_name', USER_NAME)
     user_id = session.get('user_id')
 
+    # 기존 상세 안내 문구 유지
     chat_intro_html = f"""
     <div class="initial-text" style="margin-top: 5px;">
         <b>환영합니다!</b> {user_name}님의 편리하고 스마트한 일상을 위한 '일상생활 문제 해결' 챗봇입니다
@@ -120,12 +121,20 @@ def ask():
 
         ai_response = response.choices[0].message.content.strip()
 
-        # --- 하이브리드 저장 로직 (SQL + MongoDB + Vector DB) ---
+        # --- 하이브리드 저장 로직 수정 (SQL + MongoDB + Vector DB) ---
         try:
-            # 1. SQL 저장
+            # 1. UseBox 권한 확인 및 생성 (데일리 도우미 ai_id = 5)
+            DAILY_AI_ID = 5
+            usebox = UseBox.query.filter_by(user_id=current_user_id, ai_id=DAILY_AI_ID).first()
+
+            if not usebox:
+                usebox = UseBox(user_id=current_user_id, ai_id=DAILY_AI_ID)
+                db.session.add(usebox)
+                db.session.commit()
+
+            # 2. SQL 저장 (수정된 DB 구조: usebox_id 사용)
             new_log = ChatLog(
-                user_id=current_user_id,
-                category='daily',
+                usebox_id=usebox.use_id,
                 question=user_message,
                 answer=ai_response,
                 created_at=datetime.now(timezone.utc)
@@ -134,22 +143,24 @@ def ask():
             db.session.commit()
             sql_id = new_log.id
 
-            # 2. MongoDB 저장 (명시적 None 비교)
+            # 3. MongoDB 저장 (Atlas)
             mongodb = getattr(current_app, 'mongodb', None)
             if mongodb is not None:
                 try:
                     mongodb.chat_history.insert_one({
                         "sql_id": sql_id,
+                        "usebox_id": usebox.use_id,
                         "user_id": current_user_id,
                         "category": "daily",
                         "question": user_message,
                         "answer": ai_response,
                         "timestamp": datetime.now(timezone.utc)
                     })
+                    print(">>> [SUCCESS] Daily data saved to MongoDB Atlas!")
                 except Exception as mongo_err:
                     print(f"[Daily Mongo Error] {mongo_err}")
 
-            # 3. Vector DB 저장 (명시적 None 비교)
+            # 4. Vector DB 저장
             vector_db = getattr(current_app, 'vector_db', None)
             if vector_db is not None:
                 try:
@@ -165,13 +176,11 @@ def ask():
 
         except Exception as db_err:
             db.session.rollback()
-            # 이모지 제거하여 인코딩 에러 방지
             print(f"[Daily Storage Error] {db_err}")
 
         return jsonify({'status': 'success', 'response': ai_response})
 
     except Exception as e:
-        # 이모지 제거하여 인코딩 에러 방지
         print(f"[Daily API Error] {e}")
         return jsonify({'response': '서버 통신 오류가 발생했습니다.'}), 500
 
@@ -182,9 +191,11 @@ def generate_report():
     user_id = session.get('user_id', 1)
 
     try:
-        history = ChatLog.query.filter_by(user_id=user_id, category='daily') \
-            .order_by(ChatLog.created_at.desc()) \
-            .limit(5).all()
+        # UseBox 조인을 통해 데일리(ai_id=5) 기록만 필터링
+        history = ChatLog.query.join(UseBox).filter(
+            UseBox.user_id == user_id,
+            UseBox.ai_id == 5
+        ).order_by(ChatLog.created_at.desc()).limit(5).all()
 
         if not history:
             return jsonify({'error': '분석할 상담 내역이 부족합니다.'}), 404

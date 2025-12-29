@@ -44,7 +44,12 @@ def create_app():
 
     # 2. MongoDB 초기화 (is not None 체크를 위해 안전하게 연결)
     try:
-        mongo_client = MongoClient("mongodb://localhost:27017/", serverSelectionTimeoutMS=5000)
+        # .env 파일에서 MONGO_URI를 읽어옵니다.
+        # (만약 .env에 주소가 없다면 로컬 호스트를 기본으로 사용하도록 안전장치를 둡니다)
+        mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+
+        mongo_client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+
         # chatbot_master DB 연결
         app.mongodb = mongo_client["chatbot_master"]
         # 연결 확인

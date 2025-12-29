@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, render_template, request, jsonify, session, current_app
 from openai import OpenAI
 from dotenv import load_dotenv
-from backend.models import db, ChatLog
+from backend.models import db, ChatLog, UseBox  # UseBox 모델 임포트 추가
 from datetime import datetime, timezone
 
 load_dotenv()
@@ -17,7 +17,7 @@ bp = Blueprint('finance_chat', __name__, url_prefix='/finance')
 USER_NAME = "자유로움"
 CHAT_TITLE = "재테크 및 금융 컨설팅 챗봇"
 
-# 시스템 페르소나 설정
+# 시스템 페르소나 설정 (기존 내용 100% 유지)
 SYSTEM_PROMPT = """
 당신은 사용자의 재산을 효율적으로 관리하고 증식하기 위한 맞춤형 컨설팅과 정보를 제공하는 '현명하고 신뢰할 수 있는 금융 멘토' 챗봇입니다.
 사용자 이름: {user_name}
@@ -26,7 +26,7 @@ SYSTEM_PROMPT = """
 1. 성격: 복잡한 금융 정보를 쉽고 명확하게 설명하며, 사용자가 합리적인 재정 결정을 내리도록 돕는 신뢰감 있는 멘토입니다.
 2. 어조: 객관적이고 정확한 정보를 기반으로, 사용자 상황에 맞는 실용적인 조언을 제시하는 전문적인 대화체를 사용합니다.
 3. 주요 역할: 주식, 부동산, 가상자산 등 투자 정보, 은행 상품 비교, 대출, 세금, 연금, 절약 노하우 등 재정 목표 달성에 필요한 정보를 제공합니다. 리스크 관리를 강조하여 재정 건전성 유지에 기여합니다.
-4. 답변 Role: 답변은 반드시 [공감 & 목표 확인] → [핵심 원리 & 리스크] → [단계별 실천 가이드] → [추가 정보 & 전문가 제안] 순서로 구성되어야 합니다.
+4. 답변 Role: 답변은 반드시 [공감 & 목표 확인] → [핵심 원리에 리스크] → [단계별 실천 가이드] → [추가 정보 & 전문가 제안] 순서로 구성되어야 합니다.
 
 [답변 가이드라인]
 1. 출력 형식: 답변 내용은 마크다운 형식(헤딩, 볼드, 목록)을 사용하여 가독성 높게 작성하며, 단계별 실천 가이드는 명확한 목록으로 제시합니다.
@@ -59,6 +59,7 @@ def chat_usage():
     user_name = session.get('user_name', USER_NAME)
     user_id = session.get('user_id')
 
+    # 기존 금융 안내 문구 유지
     chat_intro_html = f"""
     <div class="initial-text" style="margin-top: 5px;">
         <b>환영합니다!</b> 안녕하세요! {user_name}님의 현명한 자산 관리를 돕는 '재테크 및 금융 컨설팅' 챗봇입니다!
@@ -120,12 +121,20 @@ def ask():
 
         ai_response = response.choices[0].message.content.strip()
 
-        # --- 하이브리드 저장 로직 (SQL + MongoDB + Vector DB) ---
+        # --- 하이브리드 저장 로직 수정 (SQL + MongoDB + Vector DB) ---
         try:
-            # 1. SQL 저장
+            # 1. UseBox 권한 확인 및 생성 (금융 가이드 ai_id = 3)
+            FINANCE_AI_ID = 3
+            usebox = UseBox.query.filter_by(user_id=current_user_id, ai_id=FINANCE_AI_ID).first()
+
+            if not usebox:
+                usebox = UseBox(user_id=current_user_id, ai_id=FINANCE_AI_ID)
+                db.session.add(usebox)
+                db.session.commit()
+
+            # 2. SQL 저장 (usebox_id 필드 사용)
             new_log = ChatLog(
-                user_id=current_user_id,
-                category='finance',
+                usebox_id=usebox.use_id,
                 question=user_message,
                 answer=ai_response,
                 created_at=datetime.now(timezone.utc)
@@ -134,22 +143,24 @@ def ask():
             db.session.commit()
             sql_id = new_log.id
 
-            # 2. MongoDB 저장 (명시적 None 비교 적용)
+            # 3. MongoDB 저장 (Atlas)
             mongodb = getattr(current_app, 'mongodb', None)
             if mongodb is not None:
                 try:
                     mongodb.chat_history.insert_one({
                         "sql_id": sql_id,
+                        "usebox_id": usebox.use_id,
                         "user_id": current_user_id,
                         "category": "finance",
                         "question": user_message,
                         "answer": ai_response,
                         "timestamp": datetime.now(timezone.utc)
                     })
+                    print(">>> [SUCCESS] Finance data saved to MongoDB Atlas!")
                 except Exception as mongo_err:
                     print(f"[Finance Mongo Error] {mongo_err}")
 
-            # 3. Vector DB 저장 (명시적 None 비교 적용)
+            # 4. Vector DB 저장
             vector_db = getattr(current_app, 'vector_db', None)
             if vector_db is not None:
                 try:
@@ -161,17 +172,13 @@ def ask():
                 except Exception as vec_err:
                     print(f"[Finance Vector Error] {vec_err}")
 
-            print(f"[Finance] Hybrid Storage Success: User {current_user_id}")
-
         except Exception as db_err:
             db.session.rollback()
-            # 이모지 제거하여 인코딩 에러 방지
             print(f"[Finance Storage Error] {db_err}")
 
         return jsonify({'status': 'success', 'response': ai_response})
 
     except Exception as e:
-        # 이모지 제거하여 인코딩 에러 방지
         print(f"[Finance API Error] {e}")
         return jsonify({'response': '서버 통신 오류가 발생했습니다.'}), 500
 
@@ -182,9 +189,11 @@ def generate_report():
     user_id = session.get('user_id', 1)
 
     try:
-        history = ChatLog.query.filter_by(user_id=user_id, category='finance') \
-            .order_by(ChatLog.created_at.desc()) \
-            .limit(5).all()
+        # UseBox 조인을 통해 금융(ai_id=3) 기록만 필터링
+        history = ChatLog.query.join(UseBox).filter(
+            UseBox.user_id == user_id,
+            UseBox.ai_id == 3
+        ).order_by(ChatLog.created_at.desc()).limit(5).all()
 
         if not history:
             return jsonify({'error': '분석할 상담 내역이 부족합니다.'}), 404

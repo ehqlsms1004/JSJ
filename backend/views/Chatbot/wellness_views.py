@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, request, session, jsonify, current
 from openai import OpenAI
 from dotenv import load_dotenv
 from datetime import datetime, timezone
-from backend.models import db, ChatLog
+from backend.models import db, ChatLog, UseBox  # UseBox 모델 임포트 추가
 
 # 환경 변수 로드
 load_dotenv()
@@ -18,7 +18,7 @@ bp = Blueprint('wellness_chat', __name__, url_prefix='/wellness')
 USER_NAME = "사용자님"
 CHAT_TITLE = "정신 · 건강 웰니스 코치"
 
-# 시스템 프롬프트
+# 시스템 프롬프트 (기존 내용 100% 유지)
 SYSTEM_PROMPT = """
 당신은 사용자의 심리적 안정, 스트레스 관리, 명상, 숙면, 그리고 긍정적인 마음가짐을 돕는 '정신 건강 및 웰니스 코치'입니다.
 사용자 이름: {user_name}
@@ -114,12 +114,20 @@ def ask():
         if "의학적인 치료를 대체" not in gpt_response:
             gpt_response += disclaimer
 
-        # --- 하이브리드 저장 로직 ---
+        # --- 하이브리드 저장 로직 수정 (SQL + MongoDB + Vector DB) ---
         try:
-            # 1. SQL 저장
+            # 1. UseBox 권한 확인 및 생성 (웰니스 코치 ai_id = 2)
+            WELLNESS_AI_ID = 2
+            usebox = UseBox.query.filter_by(user_id=current_user_id, ai_id=WELLNESS_AI_ID).first()
+
+            if not usebox:
+                usebox = UseBox(user_id=current_user_id, ai_id=WELLNESS_AI_ID)
+                db.session.add(usebox)
+                db.session.commit()
+
+            # 2. SQL 저장 (usebox_id 필드 사용)
             new_log = ChatLog(
-                user_id=current_user_id,
-                category='wellness',
+                usebox_id=usebox.use_id,
                 question=user_message,
                 answer=gpt_response,
                 created_at=datetime.now(timezone.utc)
@@ -128,22 +136,24 @@ def ask():
             db.session.commit()
             sql_id = new_log.id
 
-            # 2. MongoDB 저장 (is not None 필수)
+            # 3. MongoDB 저장 (Atlas)
             mongodb = getattr(current_app, 'mongodb', None)
             if mongodb is not None:
                 try:
                     mongodb.chat_history.insert_one({
                         "sql_id": sql_id,
+                        "usebox_id": usebox.use_id,
                         "user_id": current_user_id,
                         "category": "wellness",
                         "question": user_message,
                         "answer": gpt_response,
                         "timestamp": datetime.now(timezone.utc)
                     })
+                    print(">>> [SUCCESS] Wellness data saved to MongoDB Atlas!")
                 except Exception as mongo_err:
                     print(f"[Wellness Mongo Error] {mongo_err}")
 
-            # 3. Vector DB 저장 (is not None 필수)
+            # 4. Vector DB 저장
             vector_db = getattr(current_app, 'vector_db', None)
             if vector_db is not None:
                 try:
@@ -174,8 +184,11 @@ def generate_report():
     user_id = session.get('user_id', 1)
 
     try:
-        logs = ChatLog.query.filter_by(user_id=user_id, category='wellness') \
-            .order_by(ChatLog.created_at.desc()).limit(10).all()
+        # UseBox 조인을 통해 웰니스(ai_id=2) 기록만 필터링
+        logs = ChatLog.query.join(UseBox).filter(
+            UseBox.user_id == user_id,
+            UseBox.ai_id == 2
+        ).order_by(ChatLog.created_at.desc()).limit(10).all()
 
         if not logs:
             return jsonify({'report': '마음 분석을 위한 대화 내역이 아직 부족합니다. 저와 좀 더 대화해 볼까요?'}), 404

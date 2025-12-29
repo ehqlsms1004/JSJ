@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, render_template, request, jsonify, session, current_app
 from openai import OpenAI
 from dotenv import load_dotenv
-from backend.models import db, ChatLog
+from backend.models import db, ChatLog, UseBox  # UseBox 모델 임포트 추가
 from datetime import datetime, timezone
 
 load_dotenv()
@@ -59,6 +59,7 @@ def chat_usage():
     display_name = session.get('user_name', USER_NAME)
     user_id = session.get('user_id')
 
+    # 기존 건강 안내 문구 유지
     chat_intro_html = f"""
     <div class="initial-text" style="margin-top: 5px;">
         <b>환영합니다!</b> 안녕하세요! {display_name}님의 건강을 위한 맞춤형 가이드, '개인 맞춤형 건강 관리' 챗봇입니다!
@@ -120,12 +121,20 @@ def ask():
 
         ai_response = response.choices[0].message.content.strip()
 
-        # --- 하이브리드 저장 로직 (SQL + MongoDB + Vector DB) ---
+        # --- 하이브리드 저장 로직 수정 (SQL + MongoDB + Vector DB) ---
         try:
-            # 1. SQL 저장
+            # 1. UseBox 권한 확인 및 생성 (건강 매니저 ai_id = 4)
+            HEALTH_AI_ID = 4
+            usebox = UseBox.query.filter_by(user_id=current_user_id, ai_id=HEALTH_AI_ID).first()
+
+            if not usebox:
+                usebox = UseBox(user_id=current_user_id, ai_id=HEALTH_AI_ID)
+                db.session.add(usebox)
+                db.session.commit()
+
+            # 2. SQL 저장 (usebox_id 필드 사용)
             new_log = ChatLog(
-                user_id=current_user_id,
-                category='health',
+                usebox_id=usebox.use_id,
                 question=user_message,
                 answer=ai_response,
                 created_at=datetime.now(timezone.utc)
@@ -134,22 +143,24 @@ def ask():
             db.session.commit()
             sql_id = new_log.id
 
-            # 2. MongoDB 저장 (is not None 필수)
+            # 3. MongoDB 저장 (Atlas)
             mongodb = getattr(current_app, 'mongodb', None)
             if mongodb is not None:
                 try:
                     mongodb.chat_history.insert_one({
                         "sql_id": sql_id,
+                        "usebox_id": usebox.use_id,
                         "user_id": current_user_id,
                         "category": "health",
                         "question": user_message,
                         "answer": ai_response,
                         "timestamp": datetime.now(timezone.utc)
                     })
+                    print(">>> [SUCCESS] Health data saved to MongoDB Atlas!")
                 except Exception as mongo_err:
                     print(f"[Health Mongo Error] {mongo_err}")
 
-            # 3. Vector DB 저장 (is not None 필수)
+            # 4. Vector DB 저장
             vector_db = getattr(current_app, 'vector_db', None)
             if vector_db is not None:
                 try:
@@ -180,9 +191,11 @@ def generate_report():
     user_id = session.get('user_id', 1)
 
     try:
-        history = ChatLog.query.filter_by(user_id=user_id, category='health') \
-            .order_by(ChatLog.created_at.desc()) \
-            .limit(5).all()
+        # UseBox 조인을 통해 건강(ai_id=4) 기록만 필터링
+        history = ChatLog.query.join(UseBox).filter(
+            UseBox.user_id == user_id,
+            UseBox.ai_id == 4
+        ).order_by(ChatLog.created_at.desc()).limit(5).all()
 
         if not history:
             return jsonify({'error': '분석할 건강 상담 내역이 부족합니다.'}), 404
@@ -204,22 +217,21 @@ def generate_report():
         print(f"[Health Report Error] {e}")
         return jsonify({'error': '리포트 생성 중 오류가 발생했습니다.'}), 500
 
+
 # [테스트용] 벡터 DB 저장 내용 확인 API
 @bp.route('/debug/vector')
 def debug_vector():
-    # 1. 현재 앱에 할당된 객체 확인
-    vdb = current_app.vector_db
+    vdb = getattr(current_app, 'vector_db', None)
     if vdb is None:
         return jsonify({"status": "error", "message": "Vector DB 객체가 None입니다."})
 
     try:
-        # 2. 현재 컬렉션의 실제 데이터 개수와 샘플 데이터 추출
         count = vdb.count()
-        peek = vdb.peek(limit=5)  # 실제 데이터 내용 5개 확인
+        peek = vdb.peek(limit=5)
 
         return jsonify({
             "status": "success",
-            "collection_name": vdb.name,  # 현재 연결된 컬렉션 이름 확인
+            "collection_name": vdb.name,
             "total_count": count,
             "sample_data": peek
         })

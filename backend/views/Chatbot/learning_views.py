@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, render_template, request, jsonify, session, current_app
 from openai import OpenAI
 from dotenv import load_dotenv
-from backend.models import db, ChatLog
+from backend.models import db, ChatLog, UseBox  # UseBox 모델 임포트 추가
 from datetime import datetime, timezone
 
 load_dotenv()
@@ -17,7 +17,7 @@ bp = Blueprint('learning_chat', __name__, url_prefix='/learning')
 USER_NAME = "자유로움"
 CHAT_TITLE = "효율적인 학습 및 시험 대비 챗봇"
 
-# 시스템 페르소나 설정
+# 시스템 페르소나 설정 (기존 내용 100% 유지)
 SYSTEM_PROMPT = """
 당신은 온라인 강의 추천, 시험 과목별 핵심 요약, 효율적인 공부법, 집중력 향상 팁, 특정 자격증 시험 대비 자료 등 사용자의 학습 효율을 높이고 성공적인 시험 준비를 위한 정보를 제공하는 '스마트하고 체계적인 학습 전략가' 챗봇입니다.
 사용자 이름: {user_name}
@@ -59,6 +59,7 @@ def chat_usage():
     user_name = session.get('user_name', USER_NAME)
     user_id = session.get('user_id')
 
+    # 기존 학습 안내 문구 유지
     chat_intro_html = f"""
         <div class="initial-text" style="margin-top: 5px;">
             <b>환영합니다!</b> {user_name}님의 스마트한 학습 동반자, '효율적인 학습 및 시험 대비' 챗봇입니다!
@@ -120,12 +121,20 @@ def ask():
 
         ai_response = response.choices[0].message.content.strip()
 
-        # --- 하이브리드 저장 로직 (SQL + MongoDB + Vector DB) ---
+        # --- 하이브리드 저장 로직 수정 (SQL + MongoDB + Vector DB) ---
         try:
-            # 1. SQL 저장
+            # 1. UseBox 권한 확인 및 생성 (학습 서포터 ai_id = 6)
+            LEARNING_AI_ID = 6
+            usebox = UseBox.query.filter_by(user_id=current_user_id, ai_id=LEARNING_AI_ID).first()
+
+            if not usebox:
+                usebox = UseBox(user_id=current_user_id, ai_id=LEARNING_AI_ID)
+                db.session.add(usebox)
+                db.session.commit()
+
+            # 2. SQL 저장 (usebox_id 필드 사용)
             new_log = ChatLog(
-                user_id=current_user_id,
-                category='learning',
+                usebox_id=usebox.use_id,
                 question=user_message,
                 answer=ai_response,
                 created_at=datetime.now(timezone.utc)
@@ -134,22 +143,24 @@ def ask():
             db.session.commit()
             sql_id = new_log.id
 
-            # 2. MongoDB 저장 (데이터베이스 객체 비교 시 is not None 필수)
+            # 3. MongoDB 저장 (Atlas)
             mongodb = getattr(current_app, 'mongodb', None)
             if mongodb is not None:
                 try:
                     mongodb.chat_history.insert_one({
                         "sql_id": sql_id,
+                        "usebox_id": usebox.use_id,
                         "user_id": current_user_id,
                         "category": "learning",
                         "question": user_message,
                         "answer": ai_response,
                         "timestamp": datetime.now(timezone.utc)
                     })
+                    print(">>> [SUCCESS] Learning data saved to MongoDB Atlas!")
                 except Exception as mongo_err:
                     print(f"[Learning Mongo Error] {mongo_err}")
 
-            # 3. Vector DB 저장 (명시적 None 비교)
+            # 4. Vector DB 저장
             vector_db = getattr(current_app, 'vector_db', None)
             if vector_db is not None:
                 try:
@@ -160,8 +171,6 @@ def ask():
                     )
                 except Exception as vec_err:
                     print(f"[Learning Vector Error] {vec_err}")
-
-            print(f"[Learning] Hybrid Storage Success: User {current_user_id}")
 
         except Exception as db_err:
             db.session.rollback()
@@ -180,9 +189,11 @@ def generate_report():
     user_id = session.get('user_id', 1)
 
     try:
-        history = ChatLog.query.filter_by(user_id=user_id, category='learning') \
-            .order_by(ChatLog.created_at.desc()) \
-            .limit(5).all()
+        # UseBox 조인을 통해 학습(ai_id=6) 기록만 필터링
+        history = ChatLog.query.join(UseBox).filter(
+            UseBox.user_id == user_id,
+            UseBox.ai_id == 6
+        ).order_by(ChatLog.created_at.desc()).limit(5).all()
 
         if not history:
             return jsonify({'error': '상담 내역이 부족하여 리포트를 생성할 수 없습니다.'}), 404
