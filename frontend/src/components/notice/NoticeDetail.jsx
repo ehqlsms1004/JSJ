@@ -1,244 +1,226 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import "./NoticeDetail.css";
-
-// Notice(공지) + Comment(댓글)
-// 이미지/좋아요/조회수/수정/삭제 버튼/이전글 다음글/댓글 리스트/댓글 작성 등
-// 
-// 나중에 할일
-// noticeData / comments를 API 결과로 교체
-// user_id → 닉네임 표시하려면 서버에서 join해서 내려주거나, 프론트에서 user api로 매핑
+import { fetchNoticeDetail, likeNotice, createComment, deleteNotice } from "../../api/Notice_Api";
+import { AuthUtils } from '../../api/User_Api';
 
 export default function NoticeDetail() {
-    // Mock Data (API로 교체)
-    const [noticeData, setNoticeData] = useState({
-        notice_id: 1,
-        user_id: 10,
-        author_name: "기린",
-        notice_title: "[공지] 여기는 제목이 들어갈 칸",
-        notice_write: "안녕하세요. 이곳은 게시판 상세 페이지 입니다.\n• 들어갈 거: 글쓴이, 날짜, 좋아요 수\n•조회수는 빼",
-        notice_image: "/img/notice_detail1.png",
-        notice_view_count: 128,
-        notice_like: 0,
-        notice_new: "2025-12-23",
-        notice_modify: "2025-12-23",
-        notice_delete: false,
-        // 이전 다음 (프레임용)
-        prev_notice_id: 0,
-        next_notice_id: 2,
-    });
+  const { noticeId } = useParams();
+  const navigate = useNavigate();
 
-    const [comments, setComments] = useState([
-        {
-            comment_id: 1,
-            notice_id: 1,
-            user_id: 21,
-            author_name: "태연",
-            comment_write: "술먹고 죽었어요ㅎㅎ",
-            comment_new: "2025-12-23",
-            comment_delete: false,
-            ui_liked: false,
-        }, {
-            comment_id: 2,
-            notice_id: 1,
-            user_id: 22,
-            author_name: "상수",
-            comment_write: "상수도 술먹고 죽었어요ㅎㅎㅎㅎㅎ",
-            comment_new: "2025-12-23",
-            comment_delete: false,
-            ui_liked: true,
-        },
-    ]);
+  // 상태 통합
+  const [state, setState] = useState({
+    noticeData: null,
+    comments: [],
+    newComment: "",
+    loading: true,
+    likeLoading: false,
+    commentLoading: false,
+    error: null
+  });
 
-    // UI 상태
-    const [newComment, setNewComment] = useState("");
-
-    const formattedBody = useMemo(() => {
-        // notice_write 줄바꿈 유지용
-        return (noticeData.notice_write || "").split("\n");
-    }, [noticeData.notice_write]);
-
-    // 이벤트 핸들러(프레임)
-    const onClickLikeNotice = () => {
-        // 실제로는: POST /notice/:id/like
-        setNoticeData((prev) => ({
-            ...prev,
-            notice_like: (prev.notice_like || 0) + 1,
+  // 데이터 로드 (두 번 호출 해결)
+  useEffect(() => {
+    const loadDetail = async () => {
+      try {
+        setState(prev => ({ ...prev, loading: true, error: null }));
+        const data = await fetchNoticeDetail(noticeId);
+        setState(prev => ({
+          ...prev,
+          noticeData: data.notice,
+          comments: data.comments || [],
+          loading: false
         }));
+      } catch (err) {
+        setState(prev => ({
+          ...prev,
+          error: err.message || "공지 정보를 불러오지 못했습니다.",
+          loading: false
+        }));
+      }
     };
+    if (noticeId) loadDetail();
+  }, [noticeId]);
 
-    const onClickEdit = () => {
-        // 실제로는 navigater(`/notice/edit/${notice_id}`)
-        alert("수정 버튼 - 나중에 라우팅 연결");
-    };
+  // 줄바꿈 처리
+  const formattedBody = useMemo(() => {
+    return state.noticeData?.notice_write?.split("\n") || [];
+  }, [state.noticeData?.notice_write]);
 
-    const onClickDelete = () => {
-        // 실제로는 DELETE /notice/:id
-        if (!window.confirm("정말 삭제할까요?")) return;
-        alert("삭제 처리 - 나중에 API 연결");
-    };
-
-    const onClickPrevNext = (targetId) => {
-        if (!targetId) return;
-        alert(`이동(프레임): notice_id = ${targetId} 로 라우팅/조회`);
-    };
-
-    const onToggleCommentHeart = (commentId) => {
-        setComments((prev) =>
-            prev.map((c) =>
-                (c.comment_id === commentId ? { ...c, ui_liked: !c.ui_liked } : c)
-            )
-        );
-    };
-
-    const onkeyDownComment = (e) => {
-        // 한글 IME 조합 중 Enter 오작동 방지
-        if (e.isComposing) return;
-
-        // Enter = 등록, Shift+Enter = 줄바꿈
-        if (e.key === "Enter" && !e.shiftkey) {
-            e.preventDefault();     // 줄바꿈 막기
-            onSubmitComment(e);     // 기존 submit 로직 재사용
-        }
-    } ;
-
-    const onSubmitComment = (e) => {
-        e.preventDefault();
-        const text = newComment.trim();
-        if (!text) return;
-
-        // 실제로는 POST /notice.:id/comments
-        const nextId =
-            (comments.length ? Math.max(...comments.map((c) => c.comment_id)) : 0) + 1;
-
-        const added = {
-            comment_id: nextId,
-            notice_id: noticeData.notice_id,
-            user_id: 999, // 로그인 유저 가정
-            author_name: "똥쟁이", // 로그인 유저 닉네임 가정
-            comment_write: text,
-            comment_new: new Date().toISOString().slice(0, 10),
-            comment_delete: false,
-            ui_liked: false,
-        };
-
-        setComments((prev) => [added, ...prev]);
-        setNewComment("");
-    };
-
-    // 삭제된 글 처리
-    if (noticeData.notice_delete) {
-        return (
-            <div className="nd-page">
-                <div className="nd-card">
-                    <h2 className="nd-title">삭제된 공지 입니다.</h2>
-                </div>
-            </div>
-        );
+  // 좋아요
+  const onClickLike = async () => {
+    if (!state.noticeData || state.likeLoading) return;
+    try {
+      setState(prev => ({ ...prev, likeLoading: true }));
+      const res = await likeNotice(state.noticeData.notice_id);
+      setState(prev => ({
+        ...prev,
+        noticeData: { ...prev.noticeData, notice_like: res.notice_like }
+      }));
+    } catch (err) {
+      alert(err.message || "좋아요 처리 중 오류");
+    } finally {
+      setState(prev => ({ ...prev, likeLoading: false }));
     }
+  };
 
-    return (
-        <div className="nd-page">
-            <div className="nd-card">
-                {/* 상단 해더:제목 / 메타 / 좋아요 */}
-                <div className="nd-header">
-                    <h1 className="nd-title">{noticeData.notice_title}</h1>
+  // 삭제
+  const onClickDelete = async () => {
+    if (!state.noticeData || !window.confirm("정말 삭제할까요?")) return;
+    try {
+      await deleteNotice(state.noticeData.notice_id);
+      alert("공지가 삭제되었습니다.");
+      navigate("/");
+    } catch (err) {
+      alert(err.message || "삭제 중 오류");
+    }
+  };
 
-                    <div className="nd-metaRow">
-                        <div className="nd-metaLeft">
-                            <span className="nd-author">{noticeData.author_name}</span>
-                            <span className="nd-date">{noticeData.notice_new}</span>
-                            <span className="nd-views">
-                                조회수 {noticeData.notice_view_count ?? 0}
-                            </span>
-                        </div>
+  // 댓글 등록
+  const onSubmitComment = async (e) => {
+    e.preventDefault();
+    const text = state.newComment.trim();
+    if (!text || !state.noticeData || state.commentLoading || !AuthUtils.isLoggedIn()) {
+      if (!AuthUtils.isLoggedIn()) alert("로그인 후 댓글을 작성할 수 있습니다.");
+      return;
+    }
+    try {
+      setState(prev => ({ ...prev, commentLoading: true }));
+      const created = await createComment(state.noticeData.notice_id, { comment_write: text });
+      setState(prev => ({
+        ...prev,
+        comments: [created, ...prev.comments],
+        newComment: ""
+      }));
+    } catch (err) {
+      alert(err.message || "댓글 등록 중 오류");
+    } finally {
+      setState(prev => ({ ...prev, commentLoading: false }));
+    }
+  };
 
-                        <button className="nd-likeBtn" onClick={onClickLikeNotice}>
-                            좋아요 <b>{noticeData.notice_like ?? 0}</b>
-                        </button>
-                    </div>
-                </div>
+  // 상태 체크
+  if (state.loading) return <div className="nd-page"><div className="nd-card"><h2>로딩 중...</h2></div></div>;
+  if (state.error || !state.noticeData) return (
+    <div className="nd-page">
+      <div className="nd-card">
+        <h2>공지 정보를 불러올 수 없습니다.</h2>
+        {state.error && <p>{state.error}</p>}
+      </div>
+    </div>
+  );
+  if (state.noticeData.notice_delete) return (
+    <div className="nd-page"><div className="nd-card"><h2>삭제된 공지 입니다.</h2></div></div>
+  );
 
-                <div className="nd-divider" />
-
-                {/* 본문 */}
-                <div className="nd-body">
-                    {formattedBody.map((line, idx) => (
-                        <p key={idx} className="nd-bodyLine">
-                            {line}
-                        </p>
-                    ))}
-
-                    {noticeData.notice_image ? (
-                        <div className="nd-imageWrap">
-                            <img className="nd-image" src={noticeData.notice_image} alt="공지 이미지" />
-                        </div>
-                    ) : null}
-                </div>
-
-                {/* 이전/다음 + 수정/삭제 */}
-                <div className="nd-navRow">
-                    <div className="nd-prevNext">
-                        <button className="nd-navBtn" disabled={!noticeData.prev_notice_id} onClick={() => onClickPrevNext(noticeData.prev_notice_id)}>
-                            ← 이전글
-                        </button>
-
-                        <button className="nd-navBtn" disabled={!noticeData.next_notice_id} onClick={() => onClickPrevNext(noticeData.next_notice_id)}>
-                            다음글 →
-                        </button>
-                    </div>
-
-                    <div className="nd-actions">
-                        <button className="nd-actionBtn nd-edit" onClick={onClickEdit}>
-                            수정
-                        </button>
-
-                        <button className="nd-actionBtn nd-del" onClick={onClickDelete}>
-                            삭제
-                        </button>
-                    </div>
-                </div>
-
-                <div className="nd-divider" />
-
-                {/* 댓글 */}
-                <div className="nd-comments">
-                    <div className="nd-commentsHeader">댓글 {comments.filter(c => !c.comment_delete).length}</div>
-
-                    <ul className="nd-commentList">
-                        {comments
-                            .filter((c) => !c.comment_delete)
-                            .map((c) => (
-                                <li className="nd-commentItem" key={c.comment_id}>
-                                    <div className="nd-commentTop">
-                                        <div className="nd-commentMeta">
-                                            <span className="nd-commentAuthor">{c.author_name}</span>
-                                            <span className="nd-commentDate">{c.comment_new}</span>
-                                        </div>
-
-                                        <button className={`nd-heartBtn ${c.ui_liked ? "is-liked" : ""}`} onClick={() => onToggleCommentHeart(c.comment_id)} aria-label="댓글 좋아요">
-                                            {c.ui_liked ? "♥" : "♡"}
-                                        </button>
-                                    </div>
-
-                                    <div className="nd-commentBody">{c.comment_write}</div>
-                                </li>
-                            ))
-                        }
-                    </ul>
-
-                    {/* 댓글 작성 */}
-                    <form className="nd-commentForm" onSubmit={onSubmitComment}>
-                        <div className="nd-commentBox">
-                            <textarea className="nd-commentInput" value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={onkeyDownComment} placeholder="댓글을 입력하세요" />
-                            <div className="nd-commentAction">
-                                <button className="nd-commentSubmit" type="submit">
-                                    등록
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+  return (
+    <div className="nd-page">
+      <div className="nd-card">
+        {/* 헤더 */}
+        <div className="nd-header">
+          <h1 className="nd-title">{state.noticeData.notice_title}</h1>
+          <div className="nd-metaRow">
+            <div className="nd-metaLeft">
+              <span className="nd-author">{state.noticeData.author_name}</span>
+              <span className="nd-date">{state.noticeData.notice_new}</span>
+              <span className="nd-views">조회수 {state.noticeData.notice_view_count ?? 0}</span>
             </div>
+            <button className="nd-likeBtn" onClick={onClickLike} disabled={state.likeLoading}>
+              좋아요 <b>{state.noticeData.notice_like ?? 0}</b>
+            </button>
+          </div>
         </div>
-    )
+
+        <div className="nd-divider" />
+
+        {/* 본문 */}
+        <div className="nd-body">
+          {formattedBody.map((line, idx) => (
+            <p key={idx} className="nd-bodyLine">{line}</p>
+          ))}
+          {state.noticeData.notice_image && (
+            <div className="nd-imageWrap">
+              <img className="nd-image" src={state.noticeData.notice_image} alt="공지 이미지" />
+            </div>
+          )}
+        </div>
+
+        {/* 네비 + 액션 */}
+        <div className="nd-navRow">
+          <div className="nd-prevNext">
+            <button className="nd-navBtn" disabled={!state.noticeData.prev_notice_id}
+              onClick={() => navigate(`/notice/${state.noticeData.prev_notice_id}`)}>
+              ← 이전글
+            </button>
+            <button className="nd-navBtn" disabled={!state.noticeData.next_notice_id}
+              onClick={() => navigate(`/notice/${state.noticeData.next_notice_id}`)}>
+              다음글 →
+            </button>
+          </div>
+          <div className="nd-actions">
+            <button className="nd-actionBtn nd-edit" onClick={() => navigate(`/notice/edit/${state.noticeData.notice_id}`)}>
+              수정
+            </button>
+            <button className="nd-actionBtn nd-del" onClick={onClickDelete}>삭제</button>
+          </div>
+        </div>
+
+        <div className="nd-divider" />
+
+        {/* 댓글 */}
+        <div className="nd-comments">
+          <div className="nd-commentsHeader">
+            댓글 {state.comments.filter(c => !c.comment_delete).length}
+          </div>
+          <ul className="nd-commentList">
+            {state.comments.filter(c => !c.comment_delete).map(c => (
+              <li key={c.comment_id} className="nd-commentItem">
+                <div className="nd-commentTop">
+                  <div className="nd-commentMeta">
+                    <span className="nd-commentAuthor">{c.author_name}</span>
+                    <span className="nd-commentDate">{c.comment_new}</span>
+                  </div>
+                  <button className={`nd-heartBtn ${c.ui_liked ? "is-liked" : ""}`}
+                    onClick={() => setState(prev => ({
+                      ...prev,
+                      comments: prev.comments.map(item =>
+                        item.comment_id === c.comment_id
+                          ? { ...item, ui_liked: !item.ui_liked }
+                          : item
+                      )
+                    }))}>
+                    {c.ui_liked ? "♥" : "♡"}
+                  </button>
+                </div>
+                <div className="nd-commentBody">{c.comment_write}</div>
+              </li>
+            ))}
+          </ul>
+
+          <form className="nd-commentForm" onSubmit={onSubmitComment}>
+            <div className="nd-commentBox">
+              <textarea
+                className="nd-commentInput"
+                value={state.newComment}
+                onChange={e => setState(prev => ({ ...prev, newComment: e.target.value }))}
+                onKeyDown={e => {
+                  if (e.isComposing || e.shiftKey || e.key !== "Enter") return;
+                  e.preventDefault();
+                  onSubmitComment(e);
+                }}
+                placeholder="댓글을 입력하세요"
+                disabled={state.commentLoading}
+              />
+              <div className="nd-commentAction">
+                <button className="nd-commentSubmit" type="submit"
+                  disabled={state.commentLoading || !state.newComment.trim()}>
+                  {state.commentLoading ? "등록중..." : "등록"}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 }

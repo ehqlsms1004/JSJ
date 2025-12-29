@@ -192,7 +192,7 @@ const NoticeWrite = () => {
                   <button type="button"
                     className="preview-remove-btn NW_Del_button"
                     onClick={() => removeImage(index)}
-                    aria-label="이미지 삭제"><i class="fa-solid fa-xmark"></i></button>
+                    aria-label="이미지 삭제"><i className="fa-solid fa-xmark"></i></button>
 
                   <Image src={src} thumbnail className="preview-image NW_preview_img" />
                 </div>
@@ -233,7 +233,7 @@ const NoticeWrite = () => {
               <Button variant="success" className="NW_check_button" type="submit"><i className="fa-solid fa-check"></i>확인</Button>
             </Col>
             <Col xs="auto">
-              <Button variant="secondary" className="NW_cancel_button">취소</Button>
+              <Button variant="secondary" className="NW_cancel_button" onClick={handleCancel}>취소</Button>
             </Col>
           </Row>
         </Form>

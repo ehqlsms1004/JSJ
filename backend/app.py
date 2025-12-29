@@ -14,7 +14,7 @@ from chromadb.utils import embedding_functions  # 임베딩 함수 추가
 from backend.models import db
 from backend.views.user import user_bp
 from backend.views.notice import notice_bp
-from backend.views.review import review_bp
+from backend.views.ai_detail import ai_detail_bp
 from backend.views.main import main_bp
 from backend.views.mypage import mypage_bp
 
@@ -81,7 +81,7 @@ def create_app():
     # 1. 기존 프로젝트 기능
     app.register_blueprint(user_bp, url_prefix="/api")
     app.register_blueprint(notice_bp, url_prefix="/api")
-    app.register_blueprint(review_bp, url_prefix="/api")
+    app.register_blueprint(ai_detail_bp, url_prefix="/api")
     app.register_blueprint(main_bp, url_prefix="/api")
     app.register_blueprint(mypage_bp, url_prefix="/api")
 

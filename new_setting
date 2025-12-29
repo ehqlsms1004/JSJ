@@ -12,3 +12,4 @@ pip install -r requirements.txt
 mkdir uploads 이거 실행하여 파일 생성 하기
 
 pip install httpx openai pymongo chromadb
+flask_jwt_extended
