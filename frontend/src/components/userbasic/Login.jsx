@@ -54,7 +54,7 @@ export default function Login() {
 
         <Form onSubmit={onSubmit} className="login-form">
 
-          <Form.Group className="mb-3">
+          <Form.Group>
             <Form.Label className="login-label">
               이메일
             </Form.Label>
@@ -71,7 +71,7 @@ export default function Login() {
             />
           </Form.Group>
           
-          <Form.Group className="mb-3">
+          <Form.Group>
             <Form.Label className="login-label">
               비밀번호
             </Form.Label>
@@ -87,7 +87,7 @@ export default function Login() {
           </Form.Group>
 
            {/*에러메세지 출력 란*/}
-           {error && (<div className="error-message" style={{ color: "red", fontSize: "14px", margin: "10px 0" }}> {error} </div> )}
+           {error && (<div className="error-message" style={{ color: "red", fontSize: "14px", margin:"0" }}> {error} </div> )}
 
             {/*로그인 버튼*/}
             <button type="submit" className="btn-login" disabled={loading || !email || !password}>{loading ? "로그인 중..." : "로그인"}</button>
