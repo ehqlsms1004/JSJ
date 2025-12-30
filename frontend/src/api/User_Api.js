@@ -31,6 +31,7 @@ protectedApi.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+// 멘트 고치기!
 
 //보호된 API 함수들 사용법
 export const getProfile = () => protectedApi.get('/profile');
