@@ -90,16 +90,18 @@ export default function Detail() {  // props로 aiId 받기
                     </div>
 
                     {canWrite && (
-                        <form className="review-form" onSubmit={handleSubmitReview}>
-                            <textarea
-                                className="review-textarea"
-                                placeholder="리뷰를 입력하세요"
-                                value={newReview}
-                                onChange={(e) => setNewReview(e.target.value)}
-                                maxLength={255}
-                            />
-                            <button className="review-btn" type="submit">등록하기</button>
-                        </form>
+                        <div className="wf-reviewWriteWrap">
+                            <form className="wf-reviewForm" onSubmit={handleSubmitReview}>
+                                <textarea 
+                                    className="wf-reviewTextarea" 
+                                    placeholder="리뷰를 입력하세요"
+                                    value={newReview}
+                                    onChange={(e) => setNewReview(e.target.value)}
+                                    maxLength={255}
+                                />
+                                <button className="wf-reviewSubmit" type="submit">등록</button>
+                            </form>
+                        </div>
                     )}
                     {!canWrite && (
                         <div className="review-box">

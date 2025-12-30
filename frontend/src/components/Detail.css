@@ -33,7 +33,7 @@ body {margin: 0;font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Sego
 .wf-wrap {max-width: var(--container);width: 100%;margin: 0 auto;padding:0 var(--px);}
 
 /* 상단 */
-.wf-top {min-height: 520px; padding: 30px 0; display: grid;grid-template-columns: 360px 1fr;gap: clamp(18px, 3vw, 40px);align-items: center;text-align: left;}
+.wf-top {min-height: 430px; padding: 30px 0; display: grid;grid-template-columns: 360px 1fr;gap: clamp(18px, 3vw, 40px);align-items: center;text-align: left;}
 
 /* aspect-radio = 정사각형 유지 */
 .wf-leftIcon {width: min(350px, 100%);aspect-ratio: 1/1;border-radius: 100%;display: grid;place-items: center;}
@@ -77,6 +77,21 @@ body {margin: 0;font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Sego
 .wf-bottom {width: 100%;min-height: 120px;padding: 24px 0;}
 
 .wf-bottom .wf-wrap {display: flex; justify-content: center;}
+
+/* 리뷰 전체 */
+.wf-reviewWriteWrap {margin-top: 32px;display: flex;justify-content: center;}
+
+/* 리뷰 입력 카드 */
+.wf-reviewForm {width: 100%;max-width: 900px;background: #fff;border: 1px solid #e5e5e5;border-radius: 10px;padding: 22px 24px;display: flex !important;flex-direction: column !important;gap: 16px;}
+
+/* textarea */
+.wf-reviewTextarea {width: 100%;min-height: 120px;padding: 16px;font-size: 15px;line-height: 1.6;border-radius: 8px;border: 1px solid #ddd;resize: none;outline: none;}
+
+/* 리뷰 등록버튼 */
+.wf-reviewSubmit {width: auto !important;min-width: unset !important;display: inline-flex !important;align-self: flex-end;padding: 8px 14px;background:none;color: #5b4ebd;border: 1px solid #9898dc;border-radius: 6px;cursor: pointer;transition:background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;}
+
+.wf-reviewSubmit:hover {background: #5b4ebd;color: #fff;}
+.wf-reviewSubmit:active {transform: translateY(1px);}
 
 /* 버튼 */
 .wf-cta {width: 100%;max-width: 720px; height: 64px;border-radius: 10px; border: 0;background: var(--btn);color: #111; font-size: clamp(16px,2.4vw,22px);font-weight: 900;letter-spacing: -0.3px;cursor: pointer;transition: transform 120ms ease, background-color 120ms ease, box-shadow 120ms ease,color 120ms ease;}
