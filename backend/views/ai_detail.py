@@ -58,9 +58,11 @@ def get_ai_detail(ai_id):
     # ✅ 완전한 응답
     response = {
         'ai': ai.to_dict(),
-        'reviews': [r.to_dict() for r in reviews],
-        'can_write_review': bool(current_user_id and is_user_used_ai and not has_review),
-        'is_logged_in': bool(current_user_id)
+    'reviews': [r.to_dict() for r in reviews],
+    'can_write_review': bool(current_user_id and is_user_used_ai and not has_review),
+    'is_logged_in': bool(current_user_id),
+    'has_review': has_review,
+    'has_used_ai': is_user_used_ai
     }
 
     if current_user_info and current_user_info.get('user'):

@@ -11,6 +11,9 @@ export default function Detail() {  // props로 aiId 받기
     const [newReview, setNewReview] = useState('');
     const [canWrite, setCanWrite] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [hasReview, setHasReview] = useState(false);
+    const [hasUsedAi, setHasUsedAi] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -24,6 +27,11 @@ export default function Detail() {  // props로 aiId 받기
             setAiData(data.ai);
             setReviews(data.reviews);
             setCanWrite(data.can_write_review);
+
+            setIsLoggedIn(data.is_logged_in);
+            setHasReview(data.has_review);
+            setHasUsedAi(data.has_used_ai);
+
             setLoading(false);
         } catch (error) {
             console.error('AI 정보 로드 실패:', error);
@@ -57,7 +65,7 @@ export default function Detail() {  // props로 aiId 받기
                     </div>
                     <div className="wf-rightText">
                         <h1 className="wf-title">{aiData.ai_name}</h1>
-                        <p className="wf-desc">{aiData.ai_content}</p>
+                        <p className="wf-desc">{aiData.ai_prompt}</p>
                         <p className="wf-tags">{aiData.ai_hashtag}</p>
                     </div>
                 </section>
@@ -66,7 +74,7 @@ export default function Detail() {  // props로 aiId 받기
 
                 <section className="wf-reviews">
                     <span className="wf-label">Reviews ({reviews.length})</span>
-                    
+
                     <div className="wf-list">
                         {reviews.map((r) => (
                             <div className="wf-row" key={r.review_id}>
@@ -74,7 +82,7 @@ export default function Detail() {  // props로 aiId 받기
                                     <img className="wf-avatarImg" src="/img/detail-1.png" alt="아바타" />
                                 </div>
                                 <div className="wf-reviewText">
-                                    <div className="wf-name">사용자{r.user_id}</div>
+                                    <div className="wf-name">{r.user_nickname}</div>
                                     <div className="wf-comment">{r.review_write}</div>
                                 </div>
                             </div>
@@ -97,10 +105,9 @@ export default function Detail() {  // props로 aiId 받기
                     )}
                     {!canWrite && (
                         <div className="review-box">
-                            {localStorage.getItem('access_token') 
-                                ? '이미 리뷰를 작성하셨거나 AI를 사용하지 않으셨습니다.' 
-                                : '리뷰 작성은 로그인 후 AI 사용 시 가능합니다.'
-                            }
+                            {!isLoggedIn && '리뷰 작성은 로그인 후 AI 사용 시 가능합니다.'}
+                            {isLoggedIn && !hasUsedAi && 'AI를 사용한 후 리뷰를 작성할 수 있습니다.'}
+                            {isLoggedIn && hasReview && '이미 리뷰를 작성하셨습니다.'}
                         </div>
                     )}
                 </section>

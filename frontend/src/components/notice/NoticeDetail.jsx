@@ -177,7 +177,7 @@ export default function NoticeDetail() {
               <li key={c.comment_id} className="nd-commentItem">
                 <div className="nd-commentTop">
                   <div className="nd-commentMeta">
-                    <span className="nd-commentAuthor">{c.author_name}</span>
+                    <span className="nd-commentAuthor">{c.user_nickname}</span>
                     <span className="nd-commentDate">{c.comment_new}</span>
                   </div>
                   <button className={`nd-heartBtn ${c.ui_liked ? "is-liked" : ""}`}

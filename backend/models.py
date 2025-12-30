@@ -229,6 +229,7 @@ class Review(db.Model):
         return {
             "review_id": self.review_id,
             "user_id": self.user_id,
+            "user_nickname": self.user.user_nickname,
             "ai_id": self.ai_id,
             "review_write": self.review_write,
             "review_good": self.review_good,
@@ -292,6 +293,7 @@ class Comment(db.Model):
         return {
             "comment_id": self.comment_id,
             "user_id": self.user_id,
+            "user_nickname": self.user.user_nickname,
             "notice_id": self.notice_id,
             "comment_write": self.comment_write,
             "comment_new": self.comment_new.isoformat() if self.comment_new else None,
