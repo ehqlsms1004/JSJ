@@ -1,1 +1,32 @@
-.membership_Row_ChatList {width: 100%; max-width: 900px; border-bottom: 5px solid #bcbcd5; margin: 100px 0;}
+/* 화면 정중앙 배치 */
+.chatListPage {min-height: 100vh;display: flex;justify-content: center;align-items: center;padding: 24px;background: #fff;}
+
+.chatListShell {width: 620px;height: 680px;border-radius: 18px;overflow: hidden;background: #fff;border: 1px solid #e5e5e5;display: flex;flex-direction: column;}
+
+/* 상단 프로필 고정 */
+.chatTop {position: sticky;top: 0;z-index: 0;background: #e9e6ff;padding: 20px 25px 20px;border-bottom: 1px solid rgba(0,0,0,0.06);}
+
+/* 프로필 4개 */
+.topIcons {display: flex;gap: 10px;justify-content: space-between;}
+
+/* 프로필 사진칸 */
+.iconCircleBtn {width: 100px;height: 100px;border-radius: 100%;background: #fff;border: 2px solid #d7d4ff;padding: 0;overflow: hidden;cursor: pointer;flex: 0 0 auto;}
+
+/* 사진이 동그라미 꽉 차게 */
+.iconCircleImg {width: 100%;height: 100%;object-fit: cover;display: block;}
+
+/* 목록 영역만 스크롤 */
+.chatListBody {flex: 1;overflow-y: auto;padding: 10px 0;}
+
+/* 스크롤바 */
+.chatListBody::-webkit-scrollbar {width: 8px;}
+.chatListBody::-webkit-scrollbar-thumb {background: rgba(0,0,0,0.15); border-radius: 100px;}
+
+/* 리스트 */
+.chatRoomRow {display: flex;gap: 12px;padding: 14px 16px;border-bottom: 1px solid #fff;}
+
+.chatAvatar {width: 44px;height: 44px;border-radius: 100%;background: #ddd;flex: 0 0 auto;}
+
+.chatRoomText {min-width: 0;}
+.chatRoomTitle {font-weight: 800;font-size: 14px;}
+.chatRoomPreview {font-size: 12px; color: #666;margin-top: 4px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}

@@ -84,10 +84,10 @@ body {margin: 0;font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Sego
 .wf-reviewWriteWrap {margin-top: 32px;display: flex;justify-content: center;}
 
 /* 리뷰 입력 카드 */
-.wf-reviewForm {width: 100%;max-width: 900px;background: #fff;border: 1px solid #e5e5e5;border-radius: 10px;padding: 22px 24px;display: flex !important;flex-direction: column !important;gap: 16px;}
+.wf-reviewForm {width: 100%;max-width: 900px;background: #ffffff;border: 1px solid #e5e5e5;border-radius: 10px;padding: 22px 24px;display: flex !important;flex-direction: column !important;gap: 16px;}
 
 /* textarea */
-.wf-reviewTextarea {width: 100%;min-height: 120px;padding: 16px;font-size: 15px;line-height: 1.6;border-radius: 8px;border: 1px solid #ddd;resize: none;outline: none;}
+.wf-reviewTextarea {width: 100%;min-height: 120px;padding: 16px;font-size: 15px;line-height: 1.6;border-radius: 8px;border: 1px solid #9898dc;resize: none;outline: none;}
 
 /* 리뷰 등록버튼 */
 .wf-reviewSubmit {width: auto !important;min-width: unset !important;display: inline-flex !important;align-self: flex-end;padding: 8px 14px;background:none;color: #5b4ebd;border: 1px solid #9898dc;border-radius: 6px;cursor: pointer;transition:background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;}
