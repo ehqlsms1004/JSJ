@@ -95,13 +95,28 @@ def create_review(ai_id):
 
     # 2. 이미 리뷰 작성 여부 확인 (UniqueConstraint 덕분에 중복 불가)
     existing_review = db.session.query(Review).filter(
-        Review.user_id == user_id,
-        Review.ai_id == ai_id,
-        Review.review_delete == False
-    ).first()
+    Review.user_id == user_id,
+    Review.ai_id == ai_id
+    ).one_or_none()
+
+    print(
+        "[DEBUG] user_id:", user_id,
+        "ai_id:", ai_id,
+        "existing_review:", existing_review,
+        "review_delete:",
+        existing_review.review_delete if existing_review else None
+    )
 
     if existing_review:
-        return jsonify({'error': '이미 리뷰를 작성하셨습니다.'}), 400
+        if existing_review.review_delete:
+        # 🔥 삭제된 리뷰 복구
+            existing_review.review_write = data['review_write']
+            existing_review.review_delete = False
+            existing_review.review_new = datetime.now()
+            db.session.commit()
+            return jsonify(existing_review.to_dict()), 200
+        else:
+            return jsonify({'error': '이미 리뷰를 작성하셨습니다.'}), 400
 
     # 3. 리뷰 생성 (review_new 자동 설정됨)
     review = Review(
@@ -115,3 +130,10 @@ def create_review(ai_id):
     db.session.commit()
 
     return jsonify(review.to_dict()), 201
+
+@ai_detail_bp.route("/ai/<int:ai_id>/review/<int:review_id>", methods=["DELETE"])
+def delete_review(ai_id, review_id):
+    review = Review.query.get(review_id)
+    review.review_delete = True
+    db.session.commit()
+    return jsonify(success=True)

@@ -146,3 +146,18 @@ export const deleteNotice = async (noticeId) => {
     throw error;
   }
 };
+
+// ===== 6. 댓글 삭제 =====
+export const deleteComment = async (noticeId, commentId) => {
+  try {
+    const response = await client.delete(`/notice/${noticeId}/comments/${commentId}`);
+    if (!response.data.success) {
+      throw new Error(response.data.message);
+    }
+    console.log(`✅ 댓글 삭제 성공: ${commentId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ 댓글 삭제 실패:`, error.response?.data || error.message);
+    throw error;
+  }
+};

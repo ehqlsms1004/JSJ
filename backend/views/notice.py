@@ -1,5 +1,5 @@
 # backend/views/notice.py
-from flask import Blueprint, request, jsonify, current_app, session
+from flask import Blueprint, request, jsonify, current_app, session, g
 from werkzeug.utils import secure_filename
 import os
 import time
@@ -154,3 +154,11 @@ def delete_notice(notice_id):
     notice.notice_delete = True
     db.session.commit()
     return jsonify({'success': True, 'message': '삭제 완료'})
+
+# 댓글 삭제 API
+@notice_bp.route("/notice/<int:notice_id>/comments/<int:comment_id>", methods=["DELETE"])
+def delete_comment(notice_id, comment_id):
+    comment = Comment.query.get(comment_id)
+    comment.comment_delete = True
+    db.session.commit()
+    return jsonify(success=True)

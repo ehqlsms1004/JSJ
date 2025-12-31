@@ -65,7 +65,9 @@
 .nd-commentAuthor {font-size: 14px;font-weight: 700;}
 .nd-commentDate {font-size: 12px;color: #777;}
 
-.nd-commentBody {margin-top: 6px;font-size: 14px;color: #222;line-height: 1.6;}
+.nd-commentBody {margin-top: 6px;font-size: 14px;color: #222;line-height: 1.6; display: flex; justify-content: space-between;}
+
+.nd-commentDelete {background: #e53935;border-color: #e53935;color: #fff; border: 1px solid; border-radius: 6px; font-size: 13px;}
 
 /* 댓글 하트 */
 .nd-heartBtn {border: 0;background: transparent;font-size: 18px;line-height: 1;cursor: pointer;color:#e53935;padding: 4px 6px;}
