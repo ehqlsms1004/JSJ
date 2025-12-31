@@ -14,11 +14,22 @@ export default function Detail() {  // props로 aiId 받기
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [hasReview, setHasReview] = useState(false);
     const [hasUsedAi, setHasUsedAi] = useState(false);
+    const [aiDetail, setAiDetail] = useState(null);
+
     const navigate = useNavigate();
 
     useEffect(() => {
+        loadAiDetail();
         fetchDetail();
     }, [aiId]);
+
+    const loadAiDetail = async () => {
+        const data = await Api.fetchAiDetail(aiId);
+        setAiDetail(data.ai);
+        setCanWrite(data.can_write_review);
+        setHasReview(data.has_review);
+        setHasUsedAi(data.has_used_ai);
+    };
 
     const fetchDetail = async () => {
         try {
@@ -53,6 +64,19 @@ export default function Detail() {  // props로 aiId 받기
         }
     };
 
+    const handleDeleteReview = async (reviewId) => {
+        if (!window.confirm('리뷰를 삭제하시겠습니까?')) return;
+
+        await Api.deleteReview(aiId, reviewId);
+        // UI 즉시 반영 (soft delete)
+            setReviews(prev =>
+                prev.filter(r => r.review_id !== reviewId)
+            );
+
+        // ✅ 삭제 후 즉시 상태 갱신
+        await loadAiDetail();
+    };
+
     if (loading) return <div>로딩 중...</div>;
     if (!aiData) return <div>AI를 찾을 수 없습니다.</div>;
 
@@ -83,7 +107,12 @@ export default function Detail() {  // props로 aiId 받기
                                 </div>
                                 <div className="wf-reviewText">
                                     <div className="wf-name">{r.user_nickname}</div>
-                                    <div className="wf-comment">{r.review_write}</div>
+                                    <div className="wf-comment">
+                                        {r.review_write}
+                                        <button className="wf-CommentDelete" onClick={() => handleDeleteReview(r.review_id)}>
+                                            리뷰 삭제
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -114,7 +143,15 @@ export default function Detail() {  // props로 aiId 받기
 
                 <section className="wf-bottom">
                     <div className="wf-wrap">
-                        <button className="wf-cta" type="button" onClick={() => navigate(`/${aiData.ai_content}`)}>
+                        <button className="write-btn" onClick={() => {
+                            const token = localStorage.getItem("authToken");
+                            if (!token) {
+                                alert("로그인 후 이용이 가능합니다.");
+                                navigate("/login"); // 로그인 페이지로 이동
+                                return;
+                            }
+                            navigate(`/${aiData.ai_content}`);
+                        }}>
                             대화 시작하기 (₩{aiData.ai_price})
                         </button>
                     </div>

@@ -56,3 +56,19 @@ export const createReview = async (aiId, reviewText) => {
 
     return response.json();
 };
+
+//리뷰 삭제
+export const deleteReview = async (aiId, reviewId) => {
+    if (!AuthUtils.isLoggedIn()) {
+        throw new Error('로그인이 필요합니다.');
+    }
+    const response = await fetch(`${API_BASE}/ai/${aiId}/review/${reviewId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || '리뷰 삭제에 실패했습니다.');
+    }
+    return response.json();
+};

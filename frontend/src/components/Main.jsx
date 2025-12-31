@@ -156,22 +156,21 @@ const AIIntroduce = () => {
                             <div style={{ padding: 20, textAlign: "center", width: "100%" }}>
                                 카테고리 불러오는 중...
                             </div>
-                        ): 
-                                basicAI_Data.slice(0, 8).map((item, index) => (  // 최대 6개만)
-                                    console.log("👉 클릭 아이템:", item),
-                                    <Col key={item.name || index} xs={6} md={6} className="AICategory_circle" onClick={() => navigate(`/api/ai/${item.id}`)}>
-                                        <div className="circle_div">
-                                            <Image
-                                                src={item.image || `/img/default-category-${index + 1}.png`}
-                                                roundedCircle
-                                            />
-                                            <div className="circle_text d-none d-lg-block">
-                                                <h2>{item.name}</h2>
-                                                <p>{item.tip}</p>
-                                            </div>
+                        ) :
+                            basicAI_Data.slice(0, 8).map((item, index) => (  
+                                <Col key={item.name || index} xs={6} md={6} className="AICategory_circle" onClick={() => navigate(`/api/ai/${item.id}`)}>
+                                    <div className="circle_div">
+                                        <Image
+                                            src={item.image || `/img/default-category-${index + 1}.png`}
+                                            roundedCircle
+                                        />
+                                        <div className="circle_text d-none d-lg-block">
+                                            <h2>{item.name}</h2>
+                                            <p>{item.tip}</p>
                                         </div>
-                                    </Col>
-                                ))}
+                                    </div>
+                                </Col>
+                            ))}
 
                     </Row>
                 </Container>
@@ -209,9 +208,24 @@ const AIIntroduce = () => {
                 <div className="notice-header">
                     <h2>게시판</h2>
                     <div className="notice-actions">
-                        <button className="my-board-btn" onClick={() => navigate("/NoticeMy")}>내 게시글</button>
+                        <button className="my-board-btn"
+                        // onClick={() => navigate("/NoticeMy")}
+                        >
+                            내 게시글
+                        </button>
 
-                        <button className="write-btn" onClick={() => navigate('/NoticeWrite')}>작성</button>
+                        <button
+                            className="write-btn"
+                            onClick={() => {
+                                const token = localStorage.getItem("authToken");
+                                if (!token) {
+                                    alert("로그인 후 게시글 작성이 가능합니다.");
+                                    navigate("/login"); // 로그인 페이지로 이동
+                                    return;
+                                }
+                                navigate("/NoticeWrite");
+                            }}
+                        >작성</button>
                     </div>
                 </div>
 

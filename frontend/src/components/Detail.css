@@ -71,7 +71,9 @@ body {margin: 0;font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Sego
 .wf-name {font-size: var(--name);font-weight: 900;margin: 20px 0 8px;line-height: 1.2;}
 
 /* overflow-wrap  긴단어/URL도 깨짐 */
-.wf-comment {font-size: var(--comment);line-height: 1.7;color: #222;overflow-wrap: anywhere;word-break: breack-word;margin: 0;}
+.wf-comment {font-size: var(--comment);line-height: 1.7;color: #222;overflow-wrap: anywhere;word-break: breack-word;margin: 0; display: flex; justify-content: space-between;}
+.wf-CommentDelete {background: #e53935;border-color: #e53935;color: #fff; border: 1px solid; border-radius: 6px; font-size: 13px;}
+
 
 /* 하단 */
 .wf-bottom {width: 100%;min-height: 120px;padding: 24px 0;}

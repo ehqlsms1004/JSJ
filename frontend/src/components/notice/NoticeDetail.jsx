@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./NoticeDetail.css";
-import { fetchNoticeDetail, likeNotice, createComment, deleteNotice } from "../../api/Notice_Api";
+import { fetchNoticeDetail, likeNotice, createComment, deleteNotice, deleteComment } from "../../api/Notice_Api";
 import { AuthUtils } from '../../api/User_Api';
 
 export default function NoticeDetail() {
@@ -99,6 +99,24 @@ export default function NoticeDetail() {
     }
   };
 
+  //댓글 삭제
+  const onDeleteComment = async (commentId) => {
+    if (!window.confirm("정말 삭제할까요?")) return;
+    try {
+      await deleteComment(state.noticeData.notice_id, commentId);
+      setState(prev => ({
+        ...prev,
+        comments: prev.comments.map(c =>
+          c.comment_id === commentId
+            ? { ...c, comment_delete: true }
+            : c
+        )
+      }));
+    } catch (err) {
+      alert(err.message || "댓글 삭제 중 오류");
+    }
+  };
+
   // 상태 체크
   if (state.loading) return <div className="nd-page"><div className="nd-card"><h2>로딩 중...</h2></div></div>;
   if (state.error || !state.noticeData) return (
@@ -192,7 +210,14 @@ export default function NoticeDetail() {
                     {c.ui_liked ? "♥" : "♡"}
                   </button>
                 </div>
-                <div className="nd-commentBody">{c.comment_write}</div>
+                <div className="nd-commentBody">{c.comment_write}
+                  <button
+                  className="nd-commentDelete"
+                  onClick={() => onDeleteComment(c.comment_id)}
+                >
+                  댓글 삭제
+                </button>
+                </div>
               </li>
             ))}
           </ul>
