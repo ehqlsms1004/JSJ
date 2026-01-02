@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import "./NoticeDetail.css";
+import "../../css/Notice.css";
 import { fetchNoticeDetail, likeNotice, createComment, deleteNotice, deleteComment } from "../../api/Notice_Api";
 import { AuthUtils } from '../../api/User_Api';
 
@@ -19,7 +19,7 @@ export default function NoticeDetail() {
     error: null
   });
 
-  // 데이터 로드 (두 번 호출 해결)
+  // 데이터 로드
   useEffect(() => {
     const loadDetail = async () => {
       try {

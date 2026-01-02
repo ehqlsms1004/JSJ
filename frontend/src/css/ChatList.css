@@ -38,6 +38,8 @@
 .chatRoomText{ min-width:0; }
 .chatRoomTitle{color:#fff;font-weight:800;font-size:14px;}
 .chatRoomPreview{color:rgba(255,255,255,0.55);font-size:12px; margin-top:4px;white-space:nowrap; overflow:hidden;text-overflow:ellipsis;}
+.chatAvatar {width: 44px;height: 44px;border-radius: 100%;background: #ddd;flex: 0 0 auto;}
+.chatAvatarImg {width:100%; height: 100%}
 
 /* 오른쪽 */
 .chatMain{flex:1;height:100%;display:flex;}
